@@ -37,7 +37,7 @@
     {
       "type": "ansible",
       "user": "cloud-user",
-      "playbook_file": "/home/adev4769/yugabyte-opensource/packer/yba-db-node/main.yamls",
+      "playbook_file": "/home/adev4769/yugabyte-opensource/packer/main.yaml",
       "extra_arguments": [
         "-v"
       ],
