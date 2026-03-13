@@ -21,8 +21,8 @@
 
     - name: Download YugabyteDB tarball
       ansible.builtin.get_url:
-        url: "https://software.yugabyte.com/releases/2024.2.2.2/yugabyte-2024.2.2.2-b2-linux-x86_64.tar.gz"
-        dest: "/home/cloud-user/yugabyte-2024.2.2.2-b2-linux-x86_64.tar.gz"
+        url: "https://software.yugabyte.com/releases/2025.2.2.0/yugabyte-2025.2.2.0-b80-linux-x86_64.tar.gz"
+        dest: "/home/cloud-user/yugabyte-2025.2.2.0-b80-linux-x86_64.tar.gz"
         mode: '0644'
       register: ybdb
 
@@ -33,7 +33,7 @@
 
     - name: Extract YugabyteDB tarball
       ansible.builtin.unarchive:
-        src: "/home/cloud-user/yugabyte-2024.2.2.2-b2-linux-x86_64.tar.gz"
+        src: "/home/cloud-user/yugabyte-2025.2.2.0-b80-linux-x86_64.tar.gz"
         dest: "/home/cloud-user/"
         remote_src: yes
       register: extract
@@ -44,7 +44,7 @@
 
     - name: Change ownership of entire YugabyteDB directory
       ansible.builtin.file:
-        path: "/home/cloud-user/yugabyte-2024.2.2.2"
+        path: "/home/cloud-user/yugabyte-2025.2.2.0"
         owner: cloud-user
         group: cloud-user
         recurse: yes
@@ -58,7 +58,7 @@
     - name: Run post_install.sh
       ansible.builtin.command: ./bin/post_install.sh
       args:
-        chdir: "/home/cloud-user/yugabyte-2024.2.2.2"
+        chdir: "/home/cloud-user/yugabyte-2025.2.2.0"
       register: post_install
 
     - name: Print the post_install 
@@ -129,7 +129,7 @@
         var: service_status.stdout_lines
 
     - name: Manually check the yugbaytedb 
-      command: /home/cloud-user/yugabyte-2024.2.2.2/bin/yugabyted status 
+      command: /home/cloud-user/yugabyte-2025.2.2.0/bin/yugabyted status 
       register: manual_status
     
     - name: print the manual_status

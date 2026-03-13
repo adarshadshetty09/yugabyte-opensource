@@ -21,7 +21,7 @@ yugabyte_clusters_project1 = {
     enable_data1_disk_snapshot_attach  = false
     enable_wal1_disk_snapshot_attach   = false
     enable_shared_disk_snapshot_attach = false
-    attached_persistent_disk_sizes     = [10]
+    attached_persistent_disk_sizes     = [10,10,10]
     machine_zone                       = ["us-central1-a", "us-central1-c"]
     policy_name                        = "yba-snapshot-policy"
     utc_time                           = "00:00"
@@ -32,10 +32,14 @@ yugabyte_clusters_project1 = {
     boot_disk_type                     = "pd-balanced"
     instance_with_bootdisk_snapshot    = false
     snapshot_selflink                  = null
-    instance_image_selflink            = "pprojects/project-af758472-c239-4625-869/global/images/ybdb-opensources-packer-2024-1773433026"
+    instance_image_selflink            = "projects/project-af758472-c239-4625-869/global/images/ybdb-opensources-packer-2024-1773433026"
     # kms_key_self_link                  = null
     labels                             = {}
-    internal_ip                        = ["10.0.0.1","10.0.0.2","10.0.0.4"]
+    internal_ip = [
+  "10.0.0.10",
+  "10.0.0.11",
+  "10.0.0.12"
+]
     region                             = "us-central1"
     machine_type                       = "n2-standard-2"
     vm_deletion_protection             = false
