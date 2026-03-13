@@ -1,0 +1,17 @@
+[Unit]
+Description=YugabyteDB Cluster (yugabyted-managed)
+After=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=packer
+Group=packer
+WorkingDirectory=/home/packer
+
+ExecStart=/usr/bin/python3 /home/cloud-user/yugabyte-2024.2.2.2/bin/yugabyted start
+ExecStop=/usr/bin/python3 /home/cloud-user/yugabyte-2024.2.2.2/bin/yugabyted stop
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target
