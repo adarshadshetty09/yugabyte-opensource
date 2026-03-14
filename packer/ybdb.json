@@ -12,7 +12,7 @@
       "omit_external_ip": false,
       "use_internal_ip": false,
       "service_account_email": "yugabyte@project-af758472-c239-4625-869.iam.gserviceaccount.com",
-      "ssh_username": "cloud-user",
+      "ssh_username": "yugabyte",
       "ssh_timeout": "15m",
       "metadata": {
         "enable-oslogin": "FALSE"

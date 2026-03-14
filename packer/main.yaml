@@ -5,8 +5,8 @@
   become: yes
 
   vars:
-    yugabyte_user: cloud-user
-    yugabyte_group: cloud-user
+    yugabyte_user: yugabyte
+    yugabyte_group: yugabyte
     yugabyte_version: "2025.2.2.0"
     yugabyte_tar: "yugabyte-2025.2.2.0-b80-linux-x86_64.tar.gz"
 
