@@ -70,8 +70,8 @@
     - name: Set /mnt ownership to ybaadmin:ybaadmin
       ansible.builtin.file:
         path: /mnt
-        owner: cloud-user
-        group: cloud-user
+        owner: yugabyte
+        group: yugabyte
         state: directory
         # mode: '0755' # You can optionally set mode here if needed
       # Add a handler to skip this if user/group doesn't exist
@@ -81,8 +81,8 @@
     - name: Set Yugabyte data directories ownership to yugabyte:yugabyte recursively
       ansible.builtin.file:
         path: "/mnt/{{ item }}"
-        owner: cloud-user
-        group: cloud-user
+        owner: yugabyte
+        group: yugabyte
         state: directory
         recurse: yes
       loop:
@@ -97,16 +97,16 @@
       ansible.builtin.file:
         path: /mnt/yba-data
         state: directory
-        owner: cloud-user
-        group: cloud-user
+        owner: yugabyte
+        group: yugabyte
         mode: '0755'
 
     - name: Create tmp directory under /mnt/yba-data
       ansible.builtin.file:
         path: /mnt/yba-data/tmp
         state: directory
-        owner: cloud-user
-        group: cloud-user
+        owner: yugabyte
+        group: yugabyte
         mode: '0755'
         recurse: yes
 
