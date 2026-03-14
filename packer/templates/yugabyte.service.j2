@@ -5,12 +5,12 @@ After=network-online.target
 [Service]
 Type=simples
 RemainAfterExit=yes
-User=cloud-user
-Group=cloud-user
-WorkingDirectory=/home/cloud-user
+User=yugabyte
+Group=yugabyte
+WorkingDirectory=/home/yugabyte
 
-ExecStart=/usr/bin/python3 /home/cloud-user/yugabyte-2025.2.2.0/bin/yugabyted start
-ExecStop=/usr/bin/python3 /home/cloud-user/yugabyte-2025.2.2.0/bin/yugabyted stop
+ExecStart=/usr/bin/python3 /home/yugabyte/yugabyte-2025.2.2.0/bin/yugabyted start
+ExecStop=/usr/bin/python3 /home/yugabyte/yugabyte-2025.2.2.0/bin/yugabyted stop
 LimitNOFILE=1048576
 
 [Install]
