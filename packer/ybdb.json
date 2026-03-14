@@ -36,7 +36,7 @@
   },
     {
       "type": "ansible",
-      "user": "cloud-user",
+      "user": "yugabyte",
       "playbook_file": "/home/adev4769/yugabyte-opensource/packer/main.yaml",
       "extra_arguments": [
         "-v"
