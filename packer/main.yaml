@@ -7,8 +7,8 @@
   vars:
     yugabyte_user: yugabyte
     yugabyte_group: yugabyte
-    yugabyte_version: "2025.2.2.0"
-    yugabyte_tar: "yugabyte-2025.2.2.0-b80-linux-x86_64.tar.gz"
+    yugabyte_version: "2024.2.8.0"
+    yugabyte_tar: "yugabyte-2024.2.8.0-b85-linux-x86_64.tar.gz"
 
   tasks:
 

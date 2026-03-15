@@ -192,10 +192,14 @@ resource "google_compute_instance" "gce_vm" {
   # metadata = var.metadata
 
 
-  #  ENTERPRISE SSH (NO USERNAME / NO KEY)
-  metadata = {
-    enable-oslogin = "TRUE"
-  }
+  # #  ENTERPRISE SSH (NO USERNAME / NO KEY)
+  # metadata = {
+  #   enable-oslogin = "TRUE"
+  # }
+
+metadata = {
+  ssh-keys = "yugabyte:${file("~/.ssh/id_rsa.pub")}"
+}
 
   dynamic "scratch_disk" {
     for_each = range(var.local_disk_count)
