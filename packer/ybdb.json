@@ -2,7 +2,7 @@
   "builders": [
     {
       "type": "googlecompute",
-      "project_id": "project-af758472-c239-4625-869",
+      "project_id": "project-7b6bf38a-3ad2-4d2b-bdb",
       "zone": "us-central1-a",
       "machine_type": "n2d-standard-4",
       "source_image_family": "rhel-9",
@@ -18,7 +18,7 @@
         "enable-oslogin": "FALSE"
       },
       "image_encryption_key" :{
-        "kmsKeyName":"projects/project-af758472-c239-4625-869/locations/us-central1/keyRings/global-key-ring-en/cryptoKeys/global-kms-key-en"
+        "kmsKeyName":"projects/project-7b6bf38a-3ad2-4d2b-bdb/locations/us-central1/keyRings/global-key-ring-en/cryptoKeys/global-kms-key-en"
       },
       "image_name": "ybdb-opensources-packer-2024-{{timestamp}}",
       "image_storage_locations": ["us-central1"]
@@ -37,7 +37,7 @@
     {
       "type": "ansible",
       "user": "yugabyte",
-      "playbook_file": "/home/adev4769/yugabyte-opensource/packer/main.yaml",
+      "playbook_file": "/home/shettyanisha2004/yugabyte-opensource/packer/main.yaml",
       "extra_arguments": [
         "-v"
       ],
@@ -45,3 +45,5 @@
     }
   ]
 }
+
+

@@ -1,8 +1,8 @@
 ###### Global #########
-project_id         = "project-af758472-c239-4625-869"
+project_id         = "project-7b6bf38a-3ad2-4d2b-bdb"
 network_project_id = "default"
 region             = "us-central1"
-kms_key_self_link  = "projects/project-af758472-c239-4625-869/locations/us-central1/keyRings/global-key-ring-en/cryptoKeys/global-kms-key-en"
+kms_key_self_link  = "projects/project-7b6bf38a-3ad2-4d2b-bdb/locations/us-central1/keyRings/global-key-ring-en/cryptoKeys/global-kms-key-en"
 
 
 yugabyte_clusters_project1 = {
@@ -32,7 +32,7 @@ yugabyte_clusters_project1 = {
     boot_disk_type                     = "pd-balanced"
     instance_with_bootdisk_snapshot    = false
     snapshot_selflink                  = null
-    instance_image_selflink            = "projects/project-af758472-c239-4625-869/global/images/ybdb-opensources-packer-2024-1773582248"
+    instance_image_selflink            = "projects/project-7b6bf38a-3ad2-4d2b-bdb/global/images/softwares-packer-jenkins-1773668660"
     # kms_key_self_link                  = null
     labels                             = {}
     internal_ip = [
@@ -47,7 +47,7 @@ yugabyte_clusters_project1 = {
     network                            = "vpc-yugabyte-terraform-cluster"
     subnetwork                         = "yugabyte-sub-1"
     service_account = {
-      email  = "yugabyte@project-af758472-c239-4625-869.iam.gserviceaccount.com"
+      email  = "yugabyte@project-7b6bf38a-3ad2-4d2b-bdb.iam.gserviceaccount.com"
       scopes = ["cloud-platform"]
     }
     metadata = {}
