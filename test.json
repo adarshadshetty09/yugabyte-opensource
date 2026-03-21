@@ -1,0 +1,186 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "panels": [
+
+    {
+      "type": "stat",
+      "title": "Masters UP",
+      "targets": [
+        { "expr": "sum(up{job=\"yugabyte-masters\"})" }
+      ],
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 }
+    },
+    {
+      "type": "stat",
+      "title": "TServers UP",
+      "targets": [
+        { "expr": "sum(up{job=\"yugabyte-tservers\"})" }
+      ],
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 }
+    },
+    {
+      "type": "stat",
+      "title": "Cluster Memory (MB)",
+      "targets": [
+        { "expr": "sum(mem_tracker_server) / 1024 / 1024" }
+      ],
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 }
+    },
+    {
+      "type": "stat",
+      "title": "Raft Threads",
+      "targets": [
+        { "expr": "sum(threads_running_raft)" }
+      ],
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Memory per Node",
+      "targets": [
+        {
+          "expr": "mem_tracker_server / 1024 / 1024",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Raft Threads per Node",
+      "targets": [
+        {
+          "expr": "threads_running_raft",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Consensus Traffic",
+      "targets": [
+        {
+          "expr": "rate(proxy_request_bytes_yb_consensus_ConsensusService_UpdateConsensus[1m])",
+          "legendFormat": "{{instance}} Req"
+        },
+        {
+          "expr": "rate(proxy_response_bytes_yb_consensus_ConsensusService_UpdateConsensus[1m])",
+          "legendFormat": "{{instance}} Resp"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "RPC Queue Pressure",
+      "targets": [
+        {
+          "expr": "sum by(instance) (rpcs_in_queue_yb_consensus_ConsensusService)",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "🔥 YSQL TPS (Real)",
+      "targets": [
+        {
+          "expr": "sum(rate(handler_latency_yb_tserver_PgClientService_Perform_count[1m]))",
+          "legendFormat": "TPS"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 20, "w": 8, "h": 6 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "⏱ YSQL Avg Latency",
+      "targets": [
+        {
+          "expr": "rate(handler_latency_yb_tserver_PgClientService_Perform_sum[1m]) / rate(handler_latency_yb_tserver_PgClientService_Perform_count[1m])",
+          "legendFormat": "Latency"
+        }
+      ],
+      "gridPos": { "x": 8, "y": 20, "w": 8, "h": 6 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "⚠️ YSQL RPC Queue",
+      "targets": [
+        {
+          "expr": "sum by(instance) (rpcs_in_queue_yb_tserver_PgClientService)",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "gridPos": { "x": 16, "y": 20, "w": 8, "h": 6 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "🔥 YCQL TPS",
+      "targets": [
+        {
+          "expr": "sum(rate(handler_latency_yb_tserver_TabletServerService_Write_count[1m]))",
+          "legendFormat": "Writes"
+        },
+        {
+          "expr": "sum(rate(handler_latency_yb_tserver_TabletServerService_Read_count[1m]))",
+          "legendFormat": "Reads"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 26, "w": 12, "h": 6 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "💾 Disk Usage",
+      "targets": [
+        {
+          "expr": "sum by(instance) (rocksdb_current_version_sst_files_size)",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "gridPos": { "x": 12, "y": 26, "w": 12, "h": 6 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "⚙️ Compaction Load",
+      "targets": [
+        {
+          "expr": "rate(rocksdb_compact_read_bytes[1m])",
+          "legendFormat": "Read"
+        },
+        {
+          "expr": "rate(rocksdb_compact_write_bytes[1m])",
+          "legendFormat": "Write"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 32, "w": 12, "h": 6 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "🖥 CPU Usage",
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total[1m])",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "gridPos": { "x": 12, "y": 32, "w": 12, "h": 6 }
+    }
+
+  ],
+  "schemaVersion": 38,
+  "title": "🚀 YugabyteDB Enterprise Monitoring (FINAL)",
+  "version": 5
+}

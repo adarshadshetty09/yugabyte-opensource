@@ -2,9 +2,6 @@
 
 Yugabyte OpenSource Automation
 
-
-
-
 ```
             Yugabyte Cluster
 
@@ -20,3 +17,33 @@ Yugabyte OpenSource Automation
 | 10.0.0.11  |          | 10.0.0.12    |
 +------------+          +--------------+
 ```
+
+
+
+```
+[ DB VM 1 ] YugabyteDB
+[ DB VM 2 ] YugabyteDB
+[ DB VM 3 ] YugabyteDB
+
+[ Monitoring VM ]
+   ├── Docker:
+   │     ├── Prometheus
+   │     ├── Grafana
+   │     └── Alertmanager
+
+[ Bastion Host ]
+   └── Secure Access (SSH / VPN)
+
+[ NGINX ]
+   └── HTTPS + Auth
+```
+
+
+
+
+| Component         | Port | Purpose                    |
+| ----------------- | ---- | -------------------------- |
+| Prometheus        | 9090 | Metrics collection & query |
+| Grafana           | 3000 | Visualization dashboards   |
+| Node Exporter     | 9100 | System metrics             |
+| Blackbox Exporter | 9115 | Endpoint monitoring        |
