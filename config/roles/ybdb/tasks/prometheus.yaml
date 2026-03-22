@@ -1,0 +1,91 @@
+- name: Create Prometheus user
+  user:
+    name: prometheus
+    shell: /sbin/nologin
+
+- name: Create directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: prometheus
+    group: prometheus
+  loop:
+    - /etc/prometheus
+    - /var/lib/prometheus
+
+# use curl instead of get_url
+- name: Download Prometheus using curl
+  command: >
+    curl -L -o /tmp/prometheus.tar.gz
+    https://github.com/prometheus/prometheus/releases/download/v3.10.0/prometheus-3.10.0.linux-amd64.tar.gz
+    
+- name: Extract Prometheus
+  unarchive:
+    src: /tmp/prometheus.tar.gz
+    dest: /tmp
+    remote_src: yes
+
+#  find extracted directory (no wildcard)
+- name: Find extracted prometheus directory
+  find:
+    paths: /tmp
+    patterns: "prometheus-*"
+    file_type: directory
+  register: prometheus_dir
+
+#  copy binaries correctly
+- name: Copy Prometheus binaries
+  copy:
+    src: "{{ prometheus_dir.files[0].path }}/{{ item }}"
+    dest: /usr/local/bin/{{ item }}
+    mode: '0755'
+    remote_src: yes
+  loop:
+    - prometheus
+    - promtool
+
+- name: Set ownership
+  file:
+    path: "{{ item }}"
+    owner: prometheus
+    group: prometheus
+    recurse: yes
+  loop:
+    - /etc/prometheus
+    - /var/lib/prometheus
+
+- name: Copy config
+  template:
+    src: prometheus.yml.j2
+    dest: /etc/prometheus/prometheus.yml
+  notify: Restart Prometheus
+
+- name: Create systemd service
+  copy:
+    dest: /etc/systemd/system/prometheus.service
+    content: |
+      [Unit]
+      Description=Prometheus
+      Wants=network-online.target
+      After=network-online.target
+
+      [Service]
+      User=prometheus
+      ExecStart=/usr/local/bin/prometheus \
+        --config.file=/etc/prometheus/prometheus.yml \
+        --storage.tsdb.path=/var/lib/prometheus
+
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+
+
+- name: Reload systemd
+  command: systemctl daemon-reexec
+
+- name: Start Prometheus
+  systemd:
+    name: prometheus
+    enabled: yes
+    state: started

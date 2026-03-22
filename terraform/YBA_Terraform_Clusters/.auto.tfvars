@@ -7,7 +7,7 @@ kms_key_self_link  = "projects/project-7b6bf38a-3ad2-4d2b-bdb/locations/us-centr
 
 yugabyte_clusters_project1 = {
   "ybdb" = {
-    enable_external_ip                 = true
+    enable_external_ip                 = false
     enable_shielded_vm                 = true
     machine_name                       = "ybdb"
     instance_count                     = 3
@@ -65,7 +65,7 @@ yugabyte_clusters_project1 = {
 
 yugabyte_clusters_project1_monitor = {
   "monitor" = {
-    enable_external_ip                 = true
+    enable_external_ip                 = false
     enable_shielded_vm                 = true
     machine_name                       = "monitor"
     instance_count                     = 1
