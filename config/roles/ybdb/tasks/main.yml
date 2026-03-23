@@ -34,3 +34,12 @@
 - name: Install Blackbox Exporter
   import_tasks: blackbox.yaml
   when: "'monitoring' in group_names"
+
+- name: Remove tar files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/prometheus.tar.gz
+    - /tmp/alertmanager.tar.gz
+    - /tmp/blackbox.tar.gz
