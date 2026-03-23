@@ -1,3 +1,6 @@
+- name: Kill existing alertmanager if running
+  shell: pkill -f alertmanager || true
+
 - name: Download Alertmanager
   get_url:
     url: https://github.com/prometheus/alertmanager/releases/download/v0.31.1/alertmanager-0.31.1.linux-amd64.tar.gz
@@ -16,5 +19,27 @@
     mode: '0755'
     remote_src: yes
 
+#  Create config
+- name: Create alertmanager config directory
+  file:
+    path: /etc/alertmanager
+    state: directory
+    mode: '0755'
+
+- name: Create alertmanager config file
+  copy:
+    dest: /etc/alertmanager/alertmanager.yml
+    content: |
+      route:
+        receiver: "default"
+      receivers:
+        - name: "default"
+
+# Proper start command
 - name: Start Alertmanager
-  shell: nohup alertmanager &
+  shell: |
+    nohup /usr/local/bin/alertmanager \
+    --config.file=/etc/alertmanager/alertmanager.yml \
+    --web.listen-address=":9093" > /tmp/alert.log 2>&1 &
+  args:
+    executable: /bin/bash
