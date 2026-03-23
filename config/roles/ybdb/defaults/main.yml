@@ -21,3 +21,4 @@ group_interval: 1m
 repeat_interval: 5m
 webhook_url: "http://127.0.0.1:5001/"
 alertmanager_port: 9093
+blackbox_port: 9115

@@ -30,12 +30,18 @@
           prober: http
           timeout: 5s
 
-- name: Kill existing blackbox
-  shell: pkill -f blackbox_exporter || true
-  ignore_errors: yes
+#  NEW — systemd service
+- name: Create Blackbox systemd service
+  template:
+    src: blackbox_exporter.service.j2
+    dest: /etc/systemd/system/blackbox_exporter.service
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart Blackbox
+    
 
-- name: Start Blackbox Exporter
-  shell: |
-    nohup /usr/local/bin/blackbox_exporter \
-    --config.file=/etc/blackbox_exporter/config.yml \
-    --web.listen-address=":9115" > /tmp/blackbox.log 2>&1 &
+- name: Enable Blackbox Exporter
+  systemd:
+    name: blackbox_exporter
+    enabled: yes
