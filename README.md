@@ -18,8 +18,6 @@ Yugabyte OpenSource Automation
 +------------+          +--------------+
 ```
 
-
-
 ```
 [ DB VM 1 ] YugabyteDB
 [ DB VM 2 ] YugabyteDB
@@ -39,11 +37,16 @@ Yugabyte OpenSource Automation
 ```
 
 
-
-
 | Component         | Port | Purpose                    |
 | ----------------- | ---- | -------------------------- |
 | Prometheus        | 9090 | Metrics collection & query |
 | Grafana           | 3000 | Visualization dashboards   |
 | Node Exporter     | 9100 | System metrics             |
-| Blackbox Exporter | 9115 | Endpoint monitoring        |
+| Blackbox Exporter | 9115 | Endpoint monitoring<br />  |
+
+
+### Change Permission Of The PEM File.
+
+```
+chmod 600 ~/.ssh/id_rsa
+```

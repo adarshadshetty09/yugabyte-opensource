@@ -3,18 +3,39 @@
     url: https://github.com/prometheus/blackbox_exporter/releases/download/v0.28.0/blackbox_exporter-0.28.0.linux-amd64.tar.gz
     dest: /tmp/blackbox.tar.gz
 
-- name: Extract Blackbox
+- name: Extract Blackbox Exporter
   unarchive:
     src: /tmp/blackbox.tar.gz
     dest: /opt
     remote_src: yes
 
-- name: Copy Blackbox binary
+- name: Copy binary
   copy:
     src: /opt/blackbox_exporter-0.28.0.linux-amd64/blackbox_exporter
     dest: /usr/local/bin/blackbox_exporter
     mode: '0755'
     remote_src: yes
 
+- name: Create config dir
+  file:
+    path: /etc/blackbox_exporter
+    state: directory
+
+- name: Create config file
+  copy:
+    dest: /etc/blackbox_exporter/config.yml
+    content: |
+      modules:
+        http_2xx:
+          prober: http
+          timeout: 5s
+
+- name: Kill existing blackbox
+  shell: pkill -f blackbox_exporter || true
+  ignore_errors: yes
+
 - name: Start Blackbox Exporter
-  shell: nohup blackbox_exporter &
+  shell: |
+    nohup /usr/local/bin/blackbox_exporter \
+    --config.file=/etc/blackbox_exporter/config.yml \
+    --web.listen-address=":9115" > /tmp/blackbox.log 2>&1 &
