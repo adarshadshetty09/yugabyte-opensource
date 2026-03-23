@@ -1,0 +1,20 @@
+- name: Download Alertmanager
+  get_url:
+    url: https://github.com/prometheus/alertmanager/releases/download/v0.31.1/alertmanager-0.31.1.linux-amd64.tar.gz
+    dest: /tmp/alertmanager.tar.gz
+
+- name: Extract Alertmanager
+  unarchive:
+    src: /tmp/alertmanager.tar.gz
+    dest: /opt
+    remote_src: yes
+
+- name: Copy Alertmanager binary
+  copy:
+    src: /opt/alertmanager-0.31.1.linux-amd64/alertmanager
+    dest: /usr/local/bin/alertmanager
+    mode: '0755'
+    remote_src: yes
+
+- name: Start Alertmanager
+  shell: nohup alertmanager &
