@@ -114,13 +114,13 @@ resource "random_id" "external_ip_suffix" {
 ###############################################
 # Static Internal IPs
 ###############################################
-resource "google_compute_address" "static_internal_ip_address" {
-  count        = var.instance_count
-  name         = "${var.machine_name}-int-ip-${count.index + 1}"
-  address_type = "INTERNAL"
-  address      = element(var.internal_ip, count.index % length(var.internal_ip))
-  subnetwork   = var.subnetwork
-}
+# resource "google_compute_address" "static_internal_ip_address" {
+#   count        = var.instance_count
+#   name         = "${var.machine_name}-int-ip-${count.index + 1}"
+#   address_type = "INTERNAL"
+#   address      = element(var.internal_ip, count.index % length(var.internal_ip))
+#   subnetwork   = var.subnetwork
+# }
 
 ###############################################
 # External IPs
@@ -153,7 +153,8 @@ resource "google_compute_instance" "gce_vm" {
   network_interface {
     network    = var.network
     subnetwork = var.subnetwork
-    network_ip = google_compute_address.static_internal_ip_address[count.index].address
+    # network_ip = google_compute_address.static_internal_ip_address[count.index].address
+    network_ip = element(var.internal_ip, count.index)
 
     dynamic "access_config" {
       for_each = local.access_config
@@ -192,11 +193,13 @@ resource "google_compute_instance" "gce_vm" {
   # metadata = var.metadata
 
 
-  #  ENTERPRISE SSH (NO USERNAME / NO KEY)
-  metadata = {
-    enable-oslogin = "TRUE"
-  }
+  # #  ENTERPRISE SSH (NO USERNAME / NO KEY)
+  # metadata = {
+  #   enable-oslogin = "TRUE"
+  # }
 
+
+metadata = var.metadata
 # metadata = {
 #   ssh-keys = "yugabyte:${file("~/.ssh/id_rsa.pub")}"
 # }
