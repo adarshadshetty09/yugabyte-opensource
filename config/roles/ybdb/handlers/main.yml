@@ -15,3 +15,8 @@
   systemd:
     name: alertmanager
     state: restarted
+
+- name: Restart Blackbox
+  systemd:
+    name: blackbox_exporter
+    state: restarted
