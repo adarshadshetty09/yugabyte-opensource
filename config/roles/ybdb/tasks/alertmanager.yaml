@@ -1,28 +1,14 @@
-# Check if running
-- name: Check if alertmanager is running
-  shell: pgrep -f alertmanager
-  register: alert_status
-  ignore_errors: yes
-
-# Kill only if running
-- name: Kill existing alertmanager if running
-  shell: pkill -f alertmanager
-  when: alert_status.rc == 0
-
-# Download
 - name: Download Alertmanager
   get_url:
     url: https://github.com/prometheus/alertmanager/releases/download/v0.31.1/alertmanager-0.31.1.linux-amd64.tar.gz
     dest: /tmp/alertmanager.tar.gz
 
-# Extract
 - name: Extract Alertmanager
   unarchive:
     src: /tmp/alertmanager.tar.gz
     dest: /opt
     remote_src: yes
 
-# Copy binary
 - name: Copy Alertmanager binary
   copy:
     src: /opt/alertmanager-0.31.1.linux-amd64/alertmanager
@@ -30,27 +16,29 @@
     mode: '0755'
     remote_src: yes
 
-# Config dir
 - name: Create alertmanager config directory
   file:
     path: /etc/alertmanager
     state: directory
     mode: '0755'
 
-# Config file
 - name: Create alertmanager config file
   template:
     src: alertmanager.yml.j2
     dest: /etc/alertmanager/alertmanager.yml
     mode: '0644'
+  notify: Restart Alertmanager
 
-    
+- name: Create Alertmanager systemd service
+  template:
+    src: alertmanager.service.j2
+    dest: /etc/systemd/system/alertmanager.service
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart Alertmanager
 
-# Start (safe)
-- name: Start Alertmanager
-  shell: |
-    nohup /usr/local/bin/alertmanager \
-    --config.file=/etc/alertmanager/alertmanager.yml \
-    --web.listen-address=":9093" > /tmp/alert.log 2>&1 &
-  args:
-    executable: /bin/bash
+- name: Enable Alertmanager
+  systemd:
+    name: alertmanager
+    enabled: yes

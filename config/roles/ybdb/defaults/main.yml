@@ -14,9 +14,10 @@ node_exporter_version: "1.10.2"
 
 
  # Alertmanager
- 
+
 alert_receiver: "test"
 group_wait: 10s
 group_interval: 1m
 repeat_interval: 5m
 webhook_url: "http://127.0.0.1:5001/"
+alertmanager_port: 9093
