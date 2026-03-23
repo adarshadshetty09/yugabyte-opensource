@@ -39,13 +39,12 @@
 
 # Config file
 - name: Create alertmanager config file
-  copy:
+  template:
+    src: alertmanager.yml.j2
     dest: /etc/alertmanager/alertmanager.yml
-    content: |
-      route:
-        receiver: "default"
-      receivers:
-        - name: "default"
+    mode: '0644'
+
+    
 
 # Start (safe)
 - name: Start Alertmanager
