@@ -13,19 +13,19 @@
     - /etc/prometheus
     - /var/lib/prometheus
 
-# use curl instead of get_url
+# Download Prometheus
 - name: Download Prometheus using curl
   command: >
     curl -L -o /tmp/prometheus.tar.gz
     https://github.com/prometheus/prometheus/releases/download/v3.10.0/prometheus-3.10.0.linux-amd64.tar.gz
-    
+
 - name: Extract Prometheus
   unarchive:
     src: /tmp/prometheus.tar.gz
     dest: /tmp
     remote_src: yes
 
-#  find extracted directory (no wildcard)
+# Find extracted directory
 - name: Find extracted prometheus directory
   find:
     paths: /tmp
@@ -33,7 +33,7 @@
     file_type: directory
   register: prometheus_dir
 
-#  copy binaries correctly
+# Copy binaries
 - name: Copy Prometheus binaries
   copy:
     src: "{{ prometheus_dir.files[0].path }}/{{ item }}"
@@ -44,6 +44,7 @@
     - prometheus
     - promtool
 
+# Set ownership
 - name: Set ownership
   file:
     path: "{{ item }}"
@@ -54,12 +55,27 @@
     - /etc/prometheus
     - /var/lib/prometheus
 
-- name: Copy config
+# Copy main config
+- name: Copy Prometheus config
   template:
     src: prometheus.yml.j2
     dest: /etc/prometheus/prometheus.yml
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
   notify: Restart Prometheus
 
+#  NEW — Copy alert rules
+- name: Copy alert rules
+  template:
+    src: alert.rules.yml.j2
+    dest: /etc/prometheus/alert.rules.yml
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
+  notify: Restart Prometheus
+
+# Create systemd service
 - name: Create systemd service
   copy:
     dest: /etc/systemd/system/prometheus.service
@@ -80,10 +96,11 @@
       [Install]
       WantedBy=multi-user.target
 
-
+# FIXED — correct reload
 - name: Reload systemd
-  command: systemctl daemon-reexec
+  command: systemctl daemon-reload
 
+# Start service
 - name: Start Prometheus
   systemd:
     name: prometheus
