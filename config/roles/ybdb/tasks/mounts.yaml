@@ -1,3 +1,6 @@
+---
+# Disk setup tasks
+
 - name: Create GPT partition table
   ansible.builtin.command: "parted -s {{ item.device }} mklabel gpt"
   loop: "{{ disks }}"
@@ -8,10 +11,24 @@
   loop: "{{ disks }}"
   failed_when: false
 
-- name: Create ext4 filesystem (only if missing)
-  ansible.builtin.command: "mkfs.ext4 {{ item.part }}"
-  when: "'ext4' not in lookup('ansible.builtin.pipe', 'blkid -o value -s TYPE ' ~ item.part)"
+# ✅ VERY IMPORTANT (fix)
+- name: Refresh partition table
+  ansible.builtin.command: partprobe
+  changed_when: false
+
+# ✅ SAFE filesystem check
+- name: Check filesystem type
+  ansible.builtin.command: "blkid -o value -s TYPE {{ item.part }}"
+  register: fs_check
+  failed_when: false
+  changed_when: false
   loop: "{{ disks }}"
+
+# ✅ Create filesystem only if missing
+- name: Create ext4 filesystem
+  ansible.builtin.command: "mkfs.ext4 {{ item.item.part }}"
+  when: item.stdout != "ext4"
+  loop: "{{ fs_check.results }}"
 
 - name: Ensure mount directory exists
   ansible.builtin.file:
@@ -24,94 +41,57 @@
   ansible.builtin.command: "blkid -s UUID -o value {{ item.part }}"
   register: uuid_output
   loop: "{{ disks }}"
-  loop_control:
-    label: "{{ item.part }}"
 
-# ------------------------------
-#  Combine UUID with disk info
-# ------------------------------
 - name: Build list of disks with UUID
   set_fact:
     disks_with_uuid: "{{ disks_with_uuid | default([]) + [ item.0 | combine({'uuid': item.1.stdout }) ] }}"
   loop: "{{ disks | zip(uuid_output.results) }}"
-  loop_control:
-    label: "{{ item.0.part }}"
 
-# ------------------------------
-# Use item.uuid (no more loop.index0)
-# ------------------------------
-- name: Add fstab entry for each mounted volume
+- name: Add fstab entry
   ansible.builtin.lineinfile:
     path: /etc/fstab
-    line: "UUID={{ item.uuid }} {{ item.mount }} ext4 defaults 0 0"
-    regexp: "{{ item.mount | regex_escape() }}"
-    state: present
+    line: "UUID={{ item.uuid }} {{ item.mount }} ext4 defaults,nofail 0 2"
+    regexp: "{{ item.mount }}"
   loop: "{{ disks_with_uuid }}"
 
 - name: Mount all drives
-  ansible.builtin.command: "mount -a"
+  ansible.builtin.command: mount -a
   changed_when: false
 
-## 1. Set Ownership for /mnt
-- name: Set /mnt ownership to ybaadmin:ybaadmin
+# Ownership
+- name: Set /mnt ownership
   ansible.builtin.file:
     path: /mnt
     owner: yugabyte
     group: yugabyte
     state: directory
-  # mode: '0755' # You can optionally set mode here if needed
-  # Add a handler to skip this if user/group doesn't exist
   ignore_errors: true
 
-## 2. Set Ownership for Yugabyte Directories
-- name: Set Yugabyte data directories ownership to yugabyte:yugabyte recursively
+- name: Set Yugabyte directories ownership
   ansible.builtin.file:
-    path: "/mnt/{{ item }}"
+    path: "{{ item }}"
     owner: yugabyte
     group: yugabyte
-    state: directory
     recurse: yes
   loop:
-    - yba-wal
-    - yba-shared
-    - yba-data
-  # Add a handler to skip this if user/group doesn't exist
+    - /mnt/yba-wal
+    - /mnt/yba-shared
+    - /mnt/yba-data
   ignore_errors: true
 
-# Adding the tmp directories
-- name: Ensure /mnt/yba-data exists
-  ansible.builtin.file:
-    path: /mnt/yba-data
-    state: directory
-    owner: yugabyte
-    group: yugabyte
-    mode: '0755'
-
-- name: Create tmp directory under /mnt/yba-data
+- name: Create tmp directory
   ansible.builtin.file:
     path: /mnt/yba-data/tmp
     state: directory
     owner: yugabyte
     group: yugabyte
     mode: '0755'
-    recurse: yes
 
-- name: Check SELinux status before change
+# SELinux
+- name: Check SELinux status
   command: getenforce
-  register: selinux_before
+  register: selinux_status
 
-- name: Print SELinux status (before)
-  debug:
-    msg: "SELinux status before: {{ selinux_before.stdout }}"
-
-- name: Set SELinux to permissive (setenforce 0)
+- name: Set SELinux to permissive
   command: setenforce 0
-  when: selinux_before.stdout != "Permissive"
-
-- name: Check SELinux status after change
-  command: getenforce
-  register: selinux_after
-
-- name: Print SELinux status (after)
-  debug:
-    msg: "SELinux status after: {{ selinux_after.stdout }}"
+  when: selinux_status.stdout != "Permissive"
