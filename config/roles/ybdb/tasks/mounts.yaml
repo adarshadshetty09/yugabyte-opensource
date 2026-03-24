@@ -1,20 +1,19 @@
 ---
 # ==============================
-# ENTERPRISE DISK SETUP (COMPATIBLE)
+# ENTERPRISE DISK SETUP (SAFE + IDEMPOTENT)
 # ==============================
 
 # ------------------------------
-# PARTITION TABLE
+# CREATE GPT LABEL (SAFE)
 # ------------------------------
-- name: Ensure GPT partition table exists
+- name: Ensure GPT label exists
   community.general.parted:
     device: "{{ item.device }}"
     label: gpt
-    state: present
   loop: "{{ disks }}"
 
 # ------------------------------
-# PARTITION
+# CREATE PARTITION (ONLY IF MISSING)
 # ------------------------------
 - name: Ensure partition exists
   community.general.parted:
@@ -25,16 +24,16 @@
   loop: "{{ disks }}"
 
 # ------------------------------
-# FILESYSTEM
+# CREATE FILESYSTEM (SAFE)
 # ------------------------------
-- name: Create filesystem if not exists
+- name: Ensure filesystem exists
   ansible.builtin.filesystem:
     fstype: ext4
     dev: "{{ item.part }}"
   loop: "{{ disks }}"
 
 # ------------------------------
-# DIRECTORIES
+# CREATE MOUNT DIRECTORIES
 # ------------------------------
 - name: Ensure mount directories exist
   ansible.builtin.file:
@@ -46,9 +45,9 @@
   loop: "{{ disks }}"
 
 # ------------------------------
-# MOUNT
+# MOUNT + FSTAB (IDEMPOTENT)
 # ------------------------------
-- name: Mount disks and persist
+- name: Mount disks and persist in fstab
   ansible.posix.mount:
     path: "{{ item.mount }}"
     src: "{{ item.part }}"
@@ -58,9 +57,9 @@
   loop: "{{ disks }}"
 
 # ------------------------------
-# OWNERSHIP
+# OWNERSHIP (RECURSIVE)
 # ------------------------------
-- name: Set ownership
+- name: Set ownership on mount points
   ansible.builtin.file:
     path: "{{ item.mount }}"
     owner: yugabyte
@@ -69,7 +68,7 @@
   loop: "{{ disks }}"
 
 # ------------------------------
-# TMP
+# CREATE TMP DIRECTORY
 # ------------------------------
 - name: Create tmp directory
   ansible.builtin.file:
@@ -80,9 +79,9 @@
     mode: '0755'
 
 # ------------------------------
-# SELINUX
+# SELINUX (SAFE)
 # ------------------------------
-- name: Set SELinux permissive
+- name: Set SELinux to permissive
   ansible.posix.selinux:
     policy: targeted
     state: permissive
