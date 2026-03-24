@@ -1,10 +1,10 @@
 ---
 # ==============================
-# ENTERPRISE DISK SETUP (SAFE)
+# ENTERPRISE DISK SETUP (COMPATIBLE)
 # ==============================
 
 # ------------------------------
-# CREATE PARTITION TABLE (GPT)
+# PARTITION TABLE
 # ------------------------------
 - name: Ensure GPT partition table exists
   community.general.parted:
@@ -14,7 +14,7 @@
   loop: "{{ disks }}"
 
 # ------------------------------
-# CREATE PARTITION
+# PARTITION
 # ------------------------------
 - name: Ensure partition exists
   community.general.parted:
@@ -22,23 +22,22 @@
     number: 1
     state: present
     part_type: primary
-    fs_type: ext4
   loop: "{{ disks }}"
 
 # ------------------------------
-# CREATE FILESYSTEM (ONLY IF NEEDED)
+# FILESYSTEM
 # ------------------------------
 - name: Create filesystem if not exists
-  filesystem:
+  ansible.builtin.filesystem:
     fstype: ext4
     dev: "{{ item.part }}"
   loop: "{{ disks }}"
 
 # ------------------------------
-# CREATE MOUNT DIRECTORIES
+# DIRECTORIES
 # ------------------------------
 - name: Ensure mount directories exist
-  file:
+  ansible.builtin.file:
     path: "{{ item.mount }}"
     state: directory
     owner: yugabyte
@@ -47,10 +46,10 @@
   loop: "{{ disks }}"
 
 # ------------------------------
-# MOUNT + FSTAB (IDEMPOTENT)
+# MOUNT
 # ------------------------------
-- name: Mount disks and persist in fstab
-  mount:
+- name: Mount disks and persist
+  ansible.posix.mount:
     path: "{{ item.mount }}"
     src: "{{ item.part }}"
     fstype: ext4
@@ -59,10 +58,10 @@
   loop: "{{ disks }}"
 
 # ------------------------------
-# OWNERSHIP FIX
+# OWNERSHIP
 # ------------------------------
-- name: Set Yugabyte directories ownership
-  file:
+- name: Set ownership
+  ansible.builtin.file:
     path: "{{ item.mount }}"
     owner: yugabyte
     group: yugabyte
@@ -70,10 +69,10 @@
   loop: "{{ disks }}"
 
 # ------------------------------
-# CREATE TMP DIRECTORY
+# TMP
 # ------------------------------
 - name: Create tmp directory
-  file:
+  ansible.builtin.file:
     path: /mnt/yba-data/tmp
     state: directory
     owner: yugabyte
@@ -81,9 +80,9 @@
     mode: '0755'
 
 # ------------------------------
-# SELINUX (SAFE)
+# SELINUX
 # ------------------------------
-- name: Set SELinux to permissive (if enforcing)
-  selinux:
+- name: Set SELinux permissive
+  ansible.posix.selinux:
     policy: targeted
     state: permissive
