@@ -1,49 +1,61 @@
-- name: Check yugabyted status
-  command: "{{ bin_path }} status --base_dir {{ base_dir }}"
-  become_user: yugabyte
-  register: yb_status
-  failed_when: false
-  changed_when: false
+---
+# ===============================
+# STEP 1: CLEAN EXISTING (ALL NODES)
+# ===============================
 
-- name: Check replication factor
-  set_fact:
-    is_standalone: "{{ 'Replication Factor  : 1' in yb_status.stdout }}"
-
-- name: Stop Yugabyte (only if standalone)
+- name: Stop Yugabyte
   command: "{{ bin_path }} stop --base_dir {{ base_dir }}"
   become_user: yugabyte
-  when: is_standalone
+  ignore_errors: true
 
-- name: Destroy Yugabyte (only if standalone)
+- name: Destroy Yugabyte
   command: "{{ bin_path }} destroy --base_dir {{ base_dir }}"
   become_user: yugabyte
-  when: is_standalone
+  ignore_errors: true
 
-- name: Remove var dir (only if standalone)
+- name: Remove old var directory
   file:
     path: /home/yugabyte/var
     state: absent
-  when: is_standalone
+  become: yes
 
-# PRIMARY
+# ===============================
+# STEP 2: PRIMARY NODE
+# ===============================
+
 - name: Start primary node
   command: >
     {{ bin_path }} start
     --advertise_address {{ ansible_host }}
     --base_dir {{ base_dir }}
   become_user: yugabyte
-  when:
-    - is_primary
-    - is_standalone
-  
-# FOLLOWERS
-- name: Join cluster
+  when: is_primary
+
+- name: Wait for master UI (primary)
+  wait_for:
+    host: "{{ ansible_host }}"
+    port: 7000
+    delay: 5
+    timeout: 300
+  when: is_primary
+
+# ===============================
+# STEP 3: FOLLOWER NODES
+# ===============================
+
+- name: Join follower nodes
   command: >
     {{ bin_path }} start
     --advertise_address {{ ansible_host }}
     --join {{ master_ip }}
     --base_dir {{ base_dir }}
   become_user: yugabyte
-  when:
-    - not is_primary
-    - is_standalone
+  when: not is_primary
+
+- name: Wait for tserver
+  wait_for:
+    host: "{{ ansible_host }}"
+    port: 9000
+    delay: 5
+    timeout: 300
+  when: not is_primary
