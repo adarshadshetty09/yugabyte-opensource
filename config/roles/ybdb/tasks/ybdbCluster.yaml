@@ -1,7 +1,3 @@
----
-# ------------------------------
-# CHECK IF YUGABYTE IS RUNNING
-# ------------------------------
 - name: Check yugabyted status
   command: "{{ bin_path }} status --base_dir {{ base_dir }}"
   become_user: yugabyte
@@ -9,16 +5,28 @@
   failed_when: false
   changed_when: false
 
-# ------------------------------
-# DEBUG (optional but useful)
-# ------------------------------
-- debug:
-    msg: "{{ yb_status.stdout }}"
+- name: Check replication factor
+  set_fact:
+    is_standalone: "{{ 'Replication Factor  : 1' in yb_status.stdout }}"
 
-# ------------------------------
-# PRIMARY NODE BOOTSTRAP
-# ------------------------------
-- name: Bootstrap primary node (only if not running)
+- name: Stop Yugabyte (only if standalone)
+  command: "{{ bin_path }} stop --base_dir {{ base_dir }}"
+  become_user: yugabyte
+  when: is_standalone
+
+- name: Destroy Yugabyte (only if standalone)
+  command: "{{ bin_path }} destroy --base_dir {{ base_dir }}"
+  become_user: yugabyte
+  when: is_standalone
+
+- name: Remove var dir (only if standalone)
+  file:
+    path: /home/yugabyte/var
+    state: absent
+  when: is_standalone
+
+# PRIMARY
+- name: Start primary node
   command: >
     {{ bin_path }} start
     --advertise_address {{ ansible_host }}
@@ -26,23 +34,10 @@
   become_user: yugabyte
   when:
     - is_primary
-    - "'Running' not in yb_status.stdout"
-
-# ------------------------------
-# WAIT FOR MASTER (PRIMARY ONLY)
-# ------------------------------
-- name: Wait for master UI (primary)
-  wait_for:
-    host: "{{ ansible_host }}"
-    port: 7000
-    delay: 5
-    timeout: 300
-  when: is_primary
-
-# ------------------------------
-# FOLLOWER JOIN
-# ------------------------------
-- name: Join follower nodes (only if not running)
+    - is_standalone
+  
+# FOLLOWERS
+- name: Join cluster
   command: >
     {{ bin_path }} start
     --advertise_address {{ ansible_host }}
@@ -51,36 +46,4 @@
   become_user: yugabyte
   when:
     - not is_primary
-    - "'Running' not in yb_status.stdout"
-
-# ------------------------------
-# WAIT FOR NODE READY
-# ------------------------------
-- name: Wait for tserver (followers)
-  wait_for:
-    host: "{{ ansible_host }}"
-    port: 9000
-    delay: 5
-    timeout: 300
-  when: not is_primary
-
-# ------------------------------
-# SYSTEMD (ONLY AFTER SUCCESS)
-# ------------------------------
-- name: Deploy Yugabyte systemd service
-  template:
-    src: yugabyted.service.j2
-    dest: /etc/systemd/system/yugabyted.service
-  become: yes
-  register: yb_service
-
-- name: Reload systemd if needed
-  command: systemctl daemon-reload
-  when: yb_service.changed
-  become: yes
-
-- name: Enable service
-  systemd:
-    name: yugabyted
-    enabled: yes
-  become: yes
+    - is_standalone
