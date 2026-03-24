@@ -1,0 +1,33 @@
+[Unit]
+Description=YugabyteDB Cluster Node
+After=network.target
+
+[Service]
+User=yugabyte
+WorkingDirectory=/home/yugabyte
+
+# Safe stop only if running
+ExecStartPre=/bin/bash -c 'pgrep -f yugabyted && {{ bin_path }} stop || true'
+
+{% if is_primary %}
+# PRIMARY NODE
+ExecStart={{ bin_path }} start \
+  --advertise_address {{ ansible_host }} \
+  --base_dir {{ base_dir }}
+{% else %}
+# FOLLOWER NODE
+ExecStart={{ bin_path }} start \
+  --advertise_address {{ ansible_host }} \
+  --join {{ master_ip }} \
+  --base_dir {{ base_dir }}
+{% endif %}
+
+ExecStop={{ bin_path }} stop
+
+Restart=always
+RestartSec=5
+
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target

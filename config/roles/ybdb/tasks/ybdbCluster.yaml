@@ -1,64 +1,37 @@
 ---
-# Yugabyte Cluster Setup (exact manual steps)
-
 # ------------------------------
-# STOP Yugabyte (all nodes)
+# CREATE BASE DIR (idempotent)
 # ------------------------------
-- name: Stop Yugabyte
-  command: "{{ bin_path }} stop"
-  become: yes
-  become_user: yugabyte
-  ignore_errors: true
-
-# ------------------------------
-# REMOVE OLD DATA (all nodes)
-# ------------------------------
-- name: Remove old default data (/home/yugabyte/var)
+- name: Ensure base dir exists
   file:
-    path: /home/yugabyte/var
-    state: absent
+    path: "{{ base_dir }}"
+    state: directory
+    owner: yugabyte
+    group: yugabyte
+    mode: '0755'
   become: yes
 
 # ------------------------------
-# CLEAN base_dir (all nodes)
+# DEPLOY SYSTEMD SERVICE
 # ------------------------------
-- name: Clean /mnt/yba-data
-  shell: "rm -rf /mnt/yba-data/*"
+- name: Deploy Yugabyte systemd service
+  template:
+    src: yugabyted.service.j2
+    dest: /etc/systemd/system/yugabyted.service
   become: yes
-  become_user: yugabyte
+  register: yb_service
+
+- name: Reload systemd if service changed
+  command: systemctl daemon-reload
+  become: yes
+  when: yb_service.changed
 
 # ------------------------------
-# START PRIMARY (node1)
+# ENABLE + START SERVICE
 # ------------------------------
-- name: Start primary node
-  command: >
-    {{ bin_path }} start
-    --advertise_address {{ ansible_host }}
-    --base_dir /mnt/yba-data
+- name: Ensure Yugabyte is running
+  systemd:
+    name: yugabyted
+    enabled: yes
+    state: started
   become: yes
-  become_user: yugabyte
-  when: inventory_hostname == groups['nodes'][0]
-
-# ------------------------------
-# WAIT for node1
-# ------------------------------
-- name: Wait for master UI
-  wait_for:
-    host: "{{ master_ip }}"
-    port: 7000
-    delay: 5
-    timeout: 120
-  when: inventory_hostname != groups['nodes'][0]
-
-# ------------------------------
-# START node2 + node3 (JOIN)
-# ------------------------------
-- name: Start follower nodes
-  command: >
-    {{ bin_path }} start
-    --advertise_address {{ ansible_host }}
-    --join {{ master_ip }}
-    --base_dir /mnt/yba-data
-  become: yes
-  become_user: yugabyte
-  when: inventory_hostname != groups['nodes'][0]
