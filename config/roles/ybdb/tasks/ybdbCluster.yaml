@@ -1,18 +1,71 @@
 ---
 # ------------------------------
-# CREATE BASE DIR (idempotent)
+# CHECK IF YUGABYTE IS RUNNING
 # ------------------------------
-- name: Ensure base dir exists
-  file:
-    path: "{{ base_dir }}"
-    state: directory
-    owner: yugabyte
-    group: yugabyte
-    mode: '0755'
-  become: yes
+- name: Check yugabyted status
+  command: "{{ bin_path }} status --base_dir {{ base_dir }}"
+  become_user: yugabyte
+  register: yb_status
+  failed_when: false
+  changed_when: false
 
 # ------------------------------
-# DEPLOY SYSTEMD SERVICE
+# DEBUG (optional but useful)
+# ------------------------------
+- debug:
+    msg: "{{ yb_status.stdout }}"
+
+# ------------------------------
+# PRIMARY NODE BOOTSTRAP
+# ------------------------------
+- name: Bootstrap primary node (only if not running)
+  command: >
+    {{ bin_path }} start
+    --advertise_address {{ ansible_host }}
+    --base_dir {{ base_dir }}
+  become_user: yugabyte
+  when:
+    - is_primary
+    - "'Running' not in yb_status.stdout"
+
+# ------------------------------
+# WAIT FOR MASTER (PRIMARY ONLY)
+# ------------------------------
+- name: Wait for master UI (primary)
+  wait_for:
+    host: "{{ ansible_host }}"
+    port: 7000
+    delay: 5
+    timeout: 300
+  when: is_primary
+
+# ------------------------------
+# FOLLOWER JOIN
+# ------------------------------
+- name: Join follower nodes (only if not running)
+  command: >
+    {{ bin_path }} start
+    --advertise_address {{ ansible_host }}
+    --join {{ master_ip }}
+    --base_dir {{ base_dir }}
+  become_user: yugabyte
+  when:
+    - not is_primary
+    - "'Running' not in yb_status.stdout"
+
+# ------------------------------
+# WAIT FOR NODE READY
+# ------------------------------
+- name: Wait for tserver (followers)
+  wait_for:
+    host: "{{ ansible_host }}"
+    port: 9000
+    delay: 5
+    timeout: 300
+  when: not is_primary
+
+# ------------------------------
+# SYSTEMD (ONLY AFTER SUCCESS)
 # ------------------------------
 - name: Deploy Yugabyte systemd service
   template:
@@ -21,17 +74,13 @@
   become: yes
   register: yb_service
 
-- name: Reload systemd if service changed
+- name: Reload systemd if needed
   command: systemctl daemon-reload
-  become: yes
   when: yb_service.changed
+  become: yes
 
-# ------------------------------
-# ENABLE + START SERVICE
-# ------------------------------
-- name: Ensure Yugabyte is running
+- name: Enable service
   systemd:
     name: yugabyted
     enabled: yes
-    state: started
   become: yes
