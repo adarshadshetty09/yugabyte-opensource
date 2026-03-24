@@ -1,0 +1,83 @@
+---
+# Disk setup tasks
+
+- name: Create GPT partition table
+  ansible.builtin.command: "parted -s {{ item.device }} mklabel gpt"
+  loop: "{{ disks }}"
+  failed_when: false
+
+- name: Create primary ext4 partition
+  ansible.builtin.command: "parted -s {{ item.device }} mkpart primary ext4 0% 100%"
+  loop: "{{ disks }}"
+  failed_when: false
+
+- name: Create ext4 filesystem (only if missing)
+  ansible.builtin.command: "mkfs.ext4 {{ item.part }}"
+  when: "'ext4' not in lookup('ansible.builtin.pipe', 'blkid -o value -s TYPE ' ~ item.part)"
+  loop: "{{ disks }}"
+
+- name: Ensure mount directory exists
+  ansible.builtin.file:
+    path: "{{ item.mount }}"
+    state: directory
+    mode: '0755'
+  loop: "{{ disks }}"
+
+- name: Get UUID of each partition
+  ansible.builtin.command: "blkid -s UUID -o value {{ item.part }}"
+  register: uuid_output
+  loop: "{{ disks }}"
+
+- name: Build list of disks with UUID
+  set_fact:
+    disks_with_uuid: "{{ disks_with_uuid | default([]) + [ item.0 | combine({'uuid': item.1.stdout }) ] }}"
+  loop: "{{ disks | zip(uuid_output.results) }}"
+
+- name: Add fstab entry
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    line: "UUID={{ item.uuid }} {{ item.mount }} ext4 defaults,nofail 0 2"
+    regexp: "{{ item.mount }}"
+  loop: "{{ disks_with_uuid }}"
+
+- name: Mount all drives
+  ansible.builtin.command: mount -a
+  changed_when: false
+
+# Ownership
+- name: Set /mnt ownership
+  ansible.builtin.file:
+    path: /mnt
+    owner: yugabyte
+    group: yugabyte
+    state: directory
+  ignore_errors: true
+
+- name: Set Yugabyte directories ownership
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: yugabyte
+    group: yugabyte
+    recurse: yes
+  loop:
+    - /mnt/yba-wal
+    - /mnt/yba-shared
+    - /mnt/yba-data
+  ignore_errors: true
+
+- name: Create tmp directory
+  ansible.builtin.file:
+    path: /mnt/yba-data/tmp
+    state: directory
+    owner: yugabyte
+    group: yugabyte
+    mode: '0755'
+
+# SELinux
+- name: Check SELinux status
+  command: getenforce
+  register: selinux_status
+
+- name: Set SELinux to permissive
+  command: setenforce 0
+  when: selinux_status.stdout != "Permissive"

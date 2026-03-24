@@ -120,7 +120,7 @@ yugabyte_clusters_project1_monitor = {
 
 yugabyte_clusters_project1_config = {
   "ansible-master-node" = {
-    enable_external_ip                 = true
+    enable_external_ip                 = false
     enable_shielded_vm                 = true
     machine_name                       = "ansible-master-node"
     instance_count                     = 1

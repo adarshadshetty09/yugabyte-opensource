@@ -1,6 +1,13 @@
 ---
 # tasks file for ybdb
 
+#   Disk setup (only DB nodes)
+- name: Setup disks for DB nodes
+  import_tasks: mounts.yaml
+  when: "'nodes' in group_names"
+
+
+# Install dependencies
 - name: Install dependencies (RHEL)
   yum:
     name:
@@ -9,32 +16,38 @@
       - tar
     state: present
 
-# Install Node Exporter ONLY on DB nodes
+
+# Node Exporter → DB nodes
 - name: Install Node Exporter
   import_tasks: node_exporter.yaml
   when: "'nodes' in group_names"
 
-# Install Prometheus ONLY on monitor
+
+# Prometheus → monitor
 - name: Install Prometheus
   import_tasks: prometheus.yaml
   when: "'monitoring' in group_names"
 
-# Install Grafana ONLY on monitor
+
+# Grafana → monitor
 - name: Install Grafana
   import_tasks: grafana.yaml
   when: "'monitoring' in group_names"
 
-# Install Alertmanager ONLY on monitor
 
+# Alertmanager → monitor
 - name: Install Alertmanager
   import_tasks: alertmanager.yaml
   when: "'monitoring' in group_names"
 
-# Install Blackbox Exporter ONLY on monitor
+
+# Blackbox → monitor
 - name: Install Blackbox Exporter
   import_tasks: blackbox.yaml
   when: "'monitoring' in group_names"
 
+
+# Cleanup
 - name: Remove tar files
   file:
     path: "{{ item }}"
