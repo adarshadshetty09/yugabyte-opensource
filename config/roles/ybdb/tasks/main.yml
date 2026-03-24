@@ -1,51 +1,59 @@
 ---
 # tasks file for ybdb
 
-#   Disk setup (only DB nodes)
+# ------------------------------
+# DB NODES (CLUSTER FIRST)
+# ------------------------------
+
+# Disk setup
 - name: Setup disks for DB nodes
   import_tasks: mounts.yaml
   when: "'nodes' in group_names"
 
-
-# Install dependencies
-- name: Install dependencies (RHEL)
+# Dependencies
+- name: Install dependencies
   yum:
     name:
       - wget
       - curl
       - tar
     state: present
+  when: "'nodes' in group_names"
 
-
-# Node Exporter → DB nodes
+# Node exporter (DB nodes)
 - name: Install Node Exporter
   import_tasks: node_exporter.yaml
   when: "'nodes' in group_names"
 
+#  START CLUSTER FIRST
+- name: Start Yugabyte Cluster
+  import_tasks: ybdbCluster.yaml
+  when: "'nodes' in group_names"
 
-# Prometheus → monitor
+
+# ------------------------------
+# MONITORING (RUN AFTER CLUSTER)
+# ------------------------------
+
+# Prometheus
 - name: Install Prometheus
   import_tasks: prometheus.yaml
   when: "'monitoring' in group_names"
 
-
-# Grafana → monitor
+# Grafana
 - name: Install Grafana
   import_tasks: grafana.yaml
   when: "'monitoring' in group_names"
 
-
-# Alertmanager → monitor
+# Alertmanager
 - name: Install Alertmanager
   import_tasks: alertmanager.yaml
   when: "'monitoring' in group_names"
 
-
-# Blackbox → monitor
+# Blackbox
 - name: Install Blackbox Exporter
   import_tasks: blackbox.yaml
   when: "'monitoring' in group_names"
-
 
 # Cleanup
 - name: Remove tar files
@@ -56,11 +64,3 @@
     - /tmp/prometheus.tar.gz
     - /tmp/alertmanager.tar.gz
     - /tmp/blackbox.tar.gz
-
-
-
-
-# Yugabyte Cluster → only DB nodes
-- name: Start Yugabyte Cluster
-  import_tasks: ybdbCluster.yaml
-  when: "'nodes' in group_names"
