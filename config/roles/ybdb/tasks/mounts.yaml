@@ -1,6 +1,3 @@
----
-# Disk setup tasks
-
 - name: Create GPT partition table
   ansible.builtin.command: "parted -s {{ item.device }} mklabel gpt"
   loop: "{{ disks }}"
@@ -27,57 +24,94 @@
   ansible.builtin.command: "blkid -s UUID -o value {{ item.part }}"
   register: uuid_output
   loop: "{{ disks }}"
+  loop_control:
+    label: "{{ item.part }}"
 
+# ------------------------------
+#  Combine UUID with disk info
+# ------------------------------
 - name: Build list of disks with UUID
   set_fact:
     disks_with_uuid: "{{ disks_with_uuid | default([]) + [ item.0 | combine({'uuid': item.1.stdout }) ] }}"
   loop: "{{ disks | zip(uuid_output.results) }}"
+  loop_control:
+    label: "{{ item.0.part }}"
 
-- name: Add fstab entry
+# ------------------------------
+# Use item.uuid (no more loop.index0)
+# ------------------------------
+- name: Add fstab entry for each mounted volume
   ansible.builtin.lineinfile:
     path: /etc/fstab
-    line: "UUID={{ item.uuid }} {{ item.mount }} ext4 defaults,nofail 0 2"
-    regexp: "{{ item.mount }}"
+    line: "UUID={{ item.uuid }} {{ item.mount }} ext4 defaults 0 0"
+    regexp: "{{ item.mount | regex_escape() }}"
+    state: present
   loop: "{{ disks_with_uuid }}"
 
 - name: Mount all drives
-  ansible.builtin.command: mount -a
+  ansible.builtin.command: "mount -a"
   changed_when: false
 
-# Ownership
-- name: Set /mnt ownership
+## 1. Set Ownership for /mnt
+- name: Set /mnt ownership to ybaadmin:ybaadmin
   ansible.builtin.file:
     path: /mnt
     owner: yugabyte
     group: yugabyte
     state: directory
+  # mode: '0755' # You can optionally set mode here if needed
+  # Add a handler to skip this if user/group doesn't exist
   ignore_errors: true
 
-- name: Set Yugabyte directories ownership
+## 2. Set Ownership for Yugabyte Directories
+- name: Set Yugabyte data directories ownership to yugabyte:yugabyte recursively
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "/mnt/{{ item }}"
     owner: yugabyte
     group: yugabyte
+    state: directory
     recurse: yes
   loop:
-    - /mnt/yba-wal
-    - /mnt/yba-shared
-    - /mnt/yba-data
+    - yba-wal
+    - yba-shared
+    - yba-data
+  # Add a handler to skip this if user/group doesn't exist
   ignore_errors: true
 
-- name: Create tmp directory
+# Adding the tmp directories
+- name: Ensure /mnt/yba-data exists
+  ansible.builtin.file:
+    path: /mnt/yba-data
+    state: directory
+    owner: yugabyte
+    group: yugabyte
+    mode: '0755'
+
+- name: Create tmp directory under /mnt/yba-data
   ansible.builtin.file:
     path: /mnt/yba-data/tmp
     state: directory
     owner: yugabyte
     group: yugabyte
     mode: '0755'
+    recurse: yes
 
-# SELinux
-- name: Check SELinux status
+- name: Check SELinux status before change
   command: getenforce
-  register: selinux_status
+  register: selinux_before
 
-- name: Set SELinux to permissive
+- name: Print SELinux status (before)
+  debug:
+    msg: "SELinux status before: {{ selinux_before.stdout }}"
+
+- name: Set SELinux to permissive (setenforce 0)
   command: setenforce 0
-  when: selinux_status.stdout != "Permissive"
+  when: selinux_before.stdout != "Permissive"
+
+- name: Check SELinux status after change
+  command: getenforce
+  register: selinux_after
+
+- name: Print SELinux status (after)
+  debug:
+    msg: "SELinux status after: {{ selinux_after.stdout }}"
