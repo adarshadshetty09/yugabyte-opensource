@@ -1,0 +1,61 @@
+---
+# Yugabyte Cluster Setup
+
+# Define vars (since role doesn't have them)
+- name: Set Yugabyte variables
+  set_fact:
+    yugabyte_home: "/home/ansible/yugabyte-2.20.0.0"
+    bin_path: "{{ yugabyte_home }}/bin/yugabyted"
+    master_ip: "{{ hostvars[groups['nodes'][0]].ansible_host }}"
+
+# Check binary
+- name: Check yugabyted exists
+  stat:
+    path: "{{ bin_path }}"
+  register: yb_binary
+
+- name: Fail if yugabyted not found
+  fail:
+    msg: "yugabyted not found at {{ bin_path }}"
+  when: not yb_binary.stat.exists
+
+# Idempotency check
+- name: Check Yugabyte status
+  command: "{{ bin_path }} status"
+  register: yb_status
+  failed_when: false
+  changed_when: false
+
+- name: Set running flag
+  set_fact:
+    yb_running: "{{ 'Running' in yb_status.stdout }}"
+
+# Primary node
+- name: Start primary node
+  command: >
+    {{ bin_path }} start
+    --advertise_address {{ ansible_host }}
+  when:
+    - inventory_hostname == groups['nodes'][0]
+    - not yb_running
+
+# Wait for master
+- name: Wait for master UI
+  wait_for:
+    host: "{{ master_ip }}"
+    port: 7000
+    delay: 5
+    timeout: 120
+  when:
+    - inventory_hostname != groups['nodes'][0]
+    - not yb_running
+
+# Followers
+- name: Start follower nodes
+  command: >
+    {{ bin_path }} start
+    --advertise_address {{ ansible_host }}
+    --join {{ master_ip }}
+  when:
+    - inventory_hostname != groups['nodes'][0]
+    - not yb_running

@@ -56,3 +56,11 @@
     - /tmp/prometheus.tar.gz
     - /tmp/alertmanager.tar.gz
     - /tmp/blackbox.tar.gz
+
+
+# At bottom of your file
+
+# Yugabyte Cluster → only DB nodes
+- name: Start Yugabyte Cluster
+  import_tasks: ybdbCluster.yaml
+  when: "'nodes' in group_names"
