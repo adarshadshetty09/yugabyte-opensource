@@ -4,24 +4,35 @@
 # ==============================
 
 # ------------------------------
-# CREATE GPT LABEL (SAFE)
+# CHECK EXISTING PARTITIONS (NEW)
+# ------------------------------
+- name: Check existing partitions
+  command: "lsblk -nr {{ item.device }}"
+  register: disk_state
+  changed_when: false
+  loop: "{{ disks }}"
+
+# ------------------------------
+# CREATE GPT LABEL (ONLY IF EMPTY)
 # ------------------------------
 - name: Ensure GPT label exists
   community.general.parted:
-    device: "{{ item.device }}"
+    device: "{{ item.item.device }}"
     label: gpt
-  loop: "{{ disks }}"
+  loop: "{{ disk_state.results }}"
+  when: item.stdout_lines | length == 1
 
 # ------------------------------
 # CREATE PARTITION (ONLY IF MISSING)
 # ------------------------------
 - name: Ensure partition exists
   community.general.parted:
-    device: "{{ item.device }}"
+    device: "{{ item.item.device }}"
     number: 1
     state: present
     part_type: primary
-  loop: "{{ disks }}"
+  loop: "{{ disk_state.results }}"
+  when: item.stdout_lines | length == 1
 
 # ------------------------------
 # CREATE FILESYSTEM (SAFE)
