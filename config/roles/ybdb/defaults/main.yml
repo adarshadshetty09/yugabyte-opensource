@@ -49,3 +49,9 @@ disks:
   - device: "/dev/sdd"
     part: "/dev/sdd1"
     mount: "/mnt/yba-data"
+
+
+# Yugabyte
+yugabyte_home: "/home/yugabyte/yugabyte-2024.2.8.0"
+bin_path: "{{ yugabyte_home }}/bin/yugabyted"
+master_ip: "{{ hostvars[groups['nodes'][0]].ansible_host }}"
