@@ -69,9 +69,15 @@ resource "google_compute_disk" "boot_gce_disk" {
   snapshot = var.instance_with_bootdisk_snapshot ? var.snapshot_selflink : null
   image    = var.instance_with_bootdisk_snapshot ? null : var.instance_image_selflink
 
-  disk_encryption_key {
+  # disk_encryption_key {
+  #   kms_key_self_link = var.kms_key_self_link
+  # }
+  dynamic "disk_encryption_key" {
+  for_each = var.kms_key_self_link != null && var.kms_key_self_link != "" ? [1] : []
+  content {
     kms_key_self_link = var.kms_key_self_link
   }
+}
 
   labels = merge(var.labels, {
     type     = "boot"
@@ -233,7 +239,13 @@ resource "google_compute_disk" "yugabyte" {
   type  = "pd-ssd"
   zone  = element(var.machine_zone, count.index % length(var.machine_zone))
 
-  disk_encryption_key { kms_key_self_link = var.kms_key_self_link }
+  # disk_encryption_key { kms_key_self_link = var.kms_key_self_link }
+  dynamic "disk_encryption_key" {
+  for_each = var.kms_key_self_link != null && var.kms_key_self_link != "" ? [1] : []
+  content {
+    kms_key_self_link = var.kms_key_self_link
+  }
+}
   labels = merge(var.labels, { type = "yugabyte", resource = "attached_disk" })
 
   #  LIFECYCLE PATCH
@@ -277,7 +289,13 @@ resource "google_compute_disk" "data1" {
   size  = element(var.attached_persistent_disk_sizes, 1)
   type  = "pd-ssd"
   zone  = element(var.machine_zone, count.index % length(var.machine_zone))
-  disk_encryption_key { kms_key_self_link = var.kms_key_self_link }
+  # disk_encryption_key { kms_key_self_link = var.kms_key_self_link }
+  dynamic "disk_encryption_key" {
+  for_each = var.kms_key_self_link != null && var.kms_key_self_link != "" ? [1] : []
+  content {
+    kms_key_self_link = var.kms_key_self_link
+  }
+}
   labels = merge(var.labels, { type = "data1", resource = "attached_disk" })
 
   #  LIFECYCLE PATCH
@@ -325,7 +343,13 @@ resource "google_compute_disk" "wal1" {
   type  = "pd-ssd"
   zone  = element(var.machine_zone, count.index % length(var.machine_zone))
 
-  disk_encryption_key { kms_key_self_link = var.kms_key_self_link }
+  # disk_encryption_key { kms_key_self_link = var.kms_key_self_link }
+  dynamic "disk_encryption_key" {
+  for_each = var.kms_key_self_link != null && var.kms_key_self_link != "" ? [1] : []
+  content {
+    kms_key_self_link = var.kms_key_self_link
+  }
+}
   labels = merge(var.labels, { type = "wal1", resource = "attached_disk" })
 
   lifecycle {
@@ -369,7 +393,13 @@ resource "google_compute_disk" "shared" {
   type  = "pd-ssd"
   zone  = element(var.machine_zone, count.index % length(var.machine_zone))
 
-  disk_encryption_key { kms_key_self_link = var.kms_key_self_link }
+  # disk_encryption_key { kms_key_self_link = var.kms_key_self_link }
+  dynamic "disk_encryption_key" {
+  for_each = var.kms_key_self_link != null && var.kms_key_self_link != "" ? [1] : []
+  content {
+    kms_key_self_link = var.kms_key_self_link
+  }
+}
   labels = merge(var.labels, { type = "shared", resource = "attached_disk" })
 
   lifecycle {

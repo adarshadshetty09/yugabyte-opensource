@@ -13,11 +13,10 @@ variable "project_id" {
   type        = string
 }
 
-# KMS Key Self Link
 variable "kms_key_self_link" {
-  description = "The full resource path of the KMS crypto key to encrypt disks (CMEK)"
+  description = "The full resource path of the KMS crypto key"
   type        = string
-  # default     = null
+  default     = null   
 }
 
 # GCP Region

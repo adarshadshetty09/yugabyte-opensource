@@ -225,6 +225,7 @@ variable "local_disk_count" {
 variable "kms_key_self_link" {
   description = "KMS encryption key self-link used for all disks"
   type        = string
+  default     = null   
 }
 
 variable "labels" {
