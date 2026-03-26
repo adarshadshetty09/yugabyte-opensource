@@ -3,12 +3,12 @@
 # ===============================
 
 - name: Stop Yugabyte
-  command: "{{ bin_path }} stop --base_dir={{ base_dir }}"   # ✅ FIXED (= added)
+  command: "{{ bin_path }} stop --base_dir={{ base_dir }}"  
   become_user: yugabyte
   ignore_errors: true
 
 - name: Destroy Yugabyte
-  command: "{{ bin_path }} destroy --base_dir={{ base_dir }}"  # ✅ FIXED (= added)
+  command: "{{ bin_path }} destroy --base_dir={{ base_dir }}"  
   become_user: yugabyte
   ignore_errors: true
 
@@ -37,14 +37,14 @@
 - name: Start primary node
   command: >
     {{ bin_path }} start
-    --advertise_address={{ ansible_host }}     # ✅ FIXED (= added)
-    --base_dir={{ base_dir }}                  # ✅ FIXED (= added)
+    --advertise_address={{ ansible_host }}     
+    --base_dir={{ base_dir }}                
   become_user: yugabyte
   when: is_primary
 
 # Ensure it actually started
 - name: Verify primary is running
-  command: "{{ bin_path }} status --base_dir={{ base_dir }}"   # ✅ FIXED (= added)
+  command: "{{ bin_path }} status --base_dir={{ base_dir }}"   
   become_user: yugabyte
   register: yb_status
   retries: 10
@@ -69,15 +69,15 @@
 - name: Join follower nodes
   command: >
     {{ bin_path }} start
-    --advertise_address={{ ansible_host }}     # ✅ FIXED (= added)
-    --join={{ master_ip }}                     # ✅ FIXED (= added)
-    --base_dir={{ base_dir }}                  # ✅ FIXED (= added)
+    --advertise_address={{ ansible_host }}     
+    --join={{ master_ip }}                    
+    --base_dir={{ base_dir }}                  
   become_user: yugabyte
   when: not is_primary
 
 # Verify follower started
 - name: Verify follower is running
-  command: "{{ bin_path }} status --base_dir={{ base_dir }}"   # ✅ FIXED (= added)
+  command: "{{ bin_path }} status --base_dir={{ base_dir }}"   
   become_user: yugabyte
   register: yb_status_follower
   retries: 10
