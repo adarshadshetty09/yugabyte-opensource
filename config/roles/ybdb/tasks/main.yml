@@ -1,2 +1,11 @@
 ---
 # tasks file for ybdb
+
+# ------------------------------
+# DB NODES (CLUSTER FIRST)
+# ------------------------------
+
+# Disk setup
+- name: Setup disks for DB nodes
+  import_tasks: mounts.yaml
+  when: "'nodes' in group_names"
