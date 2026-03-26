@@ -22,10 +22,11 @@
         timeout: 120
 
 # ------------------------------
-# STEP 3: START FOLLOWER NODES
+# STEP 3: START FOLLOWER NODES  
 # ------------------------------
 - name: Start follower nodes
   hosts: nodes[1:]
+  serial: 1        
   become: yes
   roles:
     - ybdb

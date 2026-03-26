@@ -3,17 +3,17 @@
 # ===============================
 
 - name: Stop Yugabyte
-  command: "{{ bin_path }} stop --base_dir={{ base_dir }}"  
+  command: "{{ bin_path }} stop --base_dir={{ base_dir }}"
   become_user: yugabyte
   ignore_errors: true
 
 - name: Destroy Yugabyte
-  command: "{{ bin_path }} destroy --base_dir={{ base_dir }}"  
+  command: "{{ bin_path }} destroy --base_dir={{ base_dir }}"
   become_user: yugabyte
   ignore_errors: true
 
 # ===============================
-# STEP 2: SAFE CLEANUP (IMPORTANT FIX)
+# STEP 2: SAFE CLEANUP
 # ===============================
 
 - name: Clean only runtime data (SAFE)
@@ -25,7 +25,6 @@
     - /home/yugabyte/var/logs
   ignore_errors: true
 
-# Give system time to stabilize
 - name: Wait after destroy
   pause:
     seconds: 10
@@ -37,23 +36,21 @@
 - name: Start primary node
   command: >
     {{ bin_path }} start
-    --advertise_address={{ ansible_host }}     
-    --base_dir={{ base_dir }}                
+    --advertise_address={{ ansible_host }}
+    --base_dir={{ base_dir }}
   become_user: yugabyte
   when: is_primary
 
-# Ensure it actually started
 - name: Verify primary is running
-  command: "{{ bin_path }} status --base_dir={{ base_dir }}"   
+  command: "{{ bin_path }} status --base_dir={{ base_dir }}"
   become_user: yugabyte
   register: yb_status
-  retries: 10
+  retries: 15          # ✅ UPDATED (was 10)
   delay: 5
   until: "'Running' in yb_status.stdout"
   changed_when: false
   when: is_primary
 
-# Wait for master UI
 - name: Wait for master UI (primary)
   wait_for:
     host: "{{ ansible_host }}"
@@ -69,24 +66,29 @@
 - name: Join follower nodes
   command: >
     {{ bin_path }} start
-    --advertise_address={{ ansible_host }}     
-    --join={{ master_ip }}                    
-    --base_dir={{ base_dir }}                  
+    --advertise_address={{ ansible_host }}
+    --join={{ master_ip }}
+    --base_dir={{ base_dir }}
   become_user: yugabyte
   when: not is_primary
+  throttle: 1        
 
-# Verify follower started
+# ✅ NEW TASK (IMPORTANT)
+- name: Wait before checking follower status
+  pause:
+    seconds: 20
+  when: not is_primary
+
 - name: Verify follower is running
-  command: "{{ bin_path }} status --base_dir={{ base_dir }}"   
+  command: "{{ bin_path }} status --base_dir={{ base_dir }}"
   become_user: yugabyte
   register: yb_status_follower
-  retries: 10
-  delay: 5
+  retries: 20        
+  delay: 10           
   until: "'Running' in yb_status_follower.stdout"
   changed_when: false
   when: not is_primary
 
-# Wait for tserver
 - name: Wait for tserver (followers)
   wait_for:
     host: "{{ ansible_host }}"
