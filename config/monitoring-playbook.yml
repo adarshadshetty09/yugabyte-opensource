@@ -34,7 +34,7 @@
 # STEP 4: MONITORING NODE
 # ------------------------------
 - name: Setup monitoring
-  hosts: monitor
+  hosts: monitoring
   become: yes
   roles:
     - ybdb

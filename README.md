@@ -44,9 +44,33 @@ Yugabyte OpenSource Automation
 | Node Exporter     | 9100 | System metrics             |
 | Blackbox Exporter | 9115 | Endpoint monitoring<br />  |
 
-
 ### Change Permission Of The PEM File.
 
 ```
 chmod 600 ~/.ssh/id_rsa
+```
+
+
+
+
+```
+          ┌──────────────────────┐
+          │   Monitoring Node    │
+          │   10.0.0.15          │
+          │----------------------│
+          │ Prometheus           │
+          │ Grafana              │
+          │ Alertmanager         │
+          │ Blackbox             │
+          └─────────┬────────────┘
+                    │
+     ┌──────────────┼──────────────┐
+     │              │              │
+┌──────────┐ ┌──────────┐ ┌──────────┐
+│ node1    │ │ node2    │ │ node3    │
+│ 10.0.0.10│ │ 10.0.0.11│ │ 10.0.0.12│
+│----------│ │----------│ │----------│
+│ Yugabyte │ │ Yugabyte │ │ Yugabyte │
+│ Node Exp │ │ Node Exp │ │ Node Exp │
+└──────────┘ └──────────┘ └──────────┘
 ```
