@@ -46,8 +46,8 @@ disks:
   #   part: "/dev/sdc1"
   #   mount: "/mnt/yba-shared"
 
-  - device: "/dev/sdd"
-    part: "/dev/sdd1"
+  - device: "/dev/sdb"
+    part: "/dev/sdb1"
     mount: "/mnt/yba-data"
 
 
