@@ -1,0 +1,63 @@
+---
+# defaults file for ybdb
+
+# -------------------------------
+# Prometheus
+# -------------------------------
+prometheus_version: "2.51.2"
+prometheus_user: "prometheus"
+prometheus_group: "prometheus"
+
+install_dir: "/usr/local/bin"
+config_dir: "/etc/prometheus"
+data_dir: "/var/lib/prometheus"
+
+prometheus_port: 9090
+
+# -------------------------------
+# Node Exporter
+# -------------------------------
+node_exporter_version: "1.10.2"
+
+# -------------------------------
+# Alertmanager
+# -------------------------------
+alert_receiver: "test"
+group_wait: 10s
+group_interval: 1m
+repeat_interval: 5m
+webhook_url: "http://127.0.0.1:5001/"
+alertmanager_port: 9093
+
+# -------------------------------
+# Blackbox
+# -------------------------------
+blackbox_port: 9115
+
+# -------------------------------
+#  ADD THIS (Disk config)
+# -------------------------------
+disks:
+  # - device: "/dev/sdb"
+  #   part: "/dev/sdb1"
+  #   mount: "/mnt/yba-wal"
+
+  # - device: "/dev/sdc"
+  #   part: "/dev/sdc1"
+  #   mount: "/mnt/yba-shared"
+
+  - device: "/dev/sdb"
+    part: "/dev/sdb1"
+    mount: "/mnt/yba-data"
+
+
+# Yugabyte cluster config
+base_dir: /mnt/yba-data
+yugabyte_home: "/home/yugabyte/yugabyte-2024.2.8.0"
+bin_path: "{{ yugabyte_home }}/bin/yugabyted"
+
+is_primary: "{{ inventory_hostname == groups['nodes'][0] }}"
+master_ip: "{{ hostvars[groups['nodes'][0]].ansible_host }}"
+
+# 🔥 CONTROL FLAG
+destroy_cluster: false
