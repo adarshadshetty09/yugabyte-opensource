@@ -38,13 +38,13 @@ blackbox_port: 9115
 #  ADD THIS (Disk config)
 # -------------------------------
 disks:
-  - device: "/dev/sdb"
-    part: "/dev/sdb1"
-    mount: "/mnt/yba-wal"
+  # - device: "/dev/sdb"
+  #   part: "/dev/sdb1"
+  #   mount: "/mnt/yba-wal"
 
-  - device: "/dev/sdc"
-    part: "/dev/sdc1"
-    mount: "/mnt/yba-shared"
+  # - device: "/dev/sdc"
+  #   part: "/dev/sdc1"
+  #   mount: "/mnt/yba-shared"
 
   - device: "/dev/sdd"
     part: "/dev/sdd1"
