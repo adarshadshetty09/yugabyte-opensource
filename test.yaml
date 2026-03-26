@@ -1,0 +1,108 @@
+---
+- name: Yugabyte Cluster Setup (Fresh Start)
+  hosts: nodes
+  become: true
+
+  vars:
+    # ===============================
+    # Yugabyte config
+    # ===============================
+    base_dir: /mnt/yba-data
+    yugabyte_home: "/home/yugabyte/yugabyte-2024.2.8.0"
+    bin_path: "{{ yugabyte_home }}/bin/yugabyted"
+
+    # ===============================
+    # Cluster logic
+    # ===============================
+    is_primary: "{{ inventory_hostname == groups['nodes'][0] }}"
+    master_ip: "{{ hostvars[groups['nodes'][0]].ansible_host }}"
+
+  tasks:
+
+    # ===============================
+    # STEP 1: STOP + DESTROY
+    # ===============================
+    - name: Stop Yugabyte
+      command: "{{ bin_path }} stop --base_dir {{ base_dir }}"
+      become_user: yugabyte
+      ignore_errors: true
+
+    - name: Destroy Yugabyte
+      command: "{{ bin_path }} destroy --base_dir {{ base_dir }}"
+      become_user: yugabyte
+      ignore_errors: true
+
+    # ===============================
+    # STEP 2: SAFE CLEANUP
+    # ===============================
+    - name: Clean only runtime data (SAFE)
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /home/yugabyte/var/data
+        - /home/yugabyte/var/logs
+      ignore_errors: true
+
+    - name: Wait after destroy
+      pause:
+        seconds: 10
+
+    # ===============================
+    # STEP 3: PRIMARY NODE
+    # ===============================
+    - name: Start primary node
+      command: >
+        {{ bin_path }} start
+        --advertise_address {{ ansible_host }}
+        --base_dir {{ base_dir }}
+      become_user: yugabyte
+      when: is_primary
+
+    - name: Verify primary is running
+      command: "{{ bin_path }} status --base_dir {{ base_dir }}"
+      become_user: yugabyte
+      register: yb_status
+      retries: 10
+      delay: 5
+      until: "'Running' in yb_status.stdout"
+      changed_when: false
+      when: is_primary
+
+    - name: Wait for master UI (primary)
+      wait_for:
+        host: "{{ ansible_host }}"
+        port: 7000
+        delay: 5
+        timeout: 300
+      when: is_primary
+
+    # ===============================
+    # STEP 4: FOLLOWER NODES
+    # ===============================
+    - name: Join follower nodes
+      command: >
+        {{ bin_path }} start
+        --advertise_address {{ ansible_host }}
+        --join {{ master_ip }}
+        --base_dir {{ base_dir }}
+      become_user: yugabyte
+      when: not is_primary
+
+    - name: Verify follower is running
+      command: "{{ bin_path }} status --base_dir {{ base_dir }}"
+      become_user: yugabyte
+      register: yb_status_follower
+      retries: 10
+      delay: 5
+      until: "'Running' in yb_status_follower.stdout"
+      changed_when: false
+      when: not is_primary
+
+    - name: Wait for tserver (followers)
+      wait_for:
+        host: "{{ ansible_host }}"
+        port: 9000
+        delay: 5
+        timeout: 300
+      when: not is_primary

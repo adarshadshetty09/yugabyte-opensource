@@ -43,7 +43,7 @@
   become_user: yugabyte
   when: is_primary
 
-# 🔥 Ensure it actually started (VERY IMPORTANT)
+#  Ensure it actually started (VERY IMPORTANT)
 - name: Verify primary is running
   command: "{{ bin_path }} status --base_dir {{ base_dir }}"
   become_user: yugabyte
