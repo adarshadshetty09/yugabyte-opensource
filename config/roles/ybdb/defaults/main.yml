@@ -53,12 +53,11 @@ disks:
 
 # Yugabyte cluster config
 base_dir: /mnt/yba-data
+yugabyte_home: "/home/yugabyte/yugabyte-2024.2.8.0"
+bin_path: "{{ yugabyte_home }}/bin/yugabyted"
 
 is_primary: "{{ inventory_hostname == groups['nodes'][0] }}"
 master_ip: "{{ hostvars[groups['nodes'][0]].ansible_host }}"
 
-# -------------------------------
-# Yugabyte paths (FIX)
-# -------------------------------
-yugabyte_home: "/home/yugabyte/yugabyte-2024.2.8.0"
-bin_path: "{{ yugabyte_home }}/bin/yugabyted"
+# 🔥 CONTROL FLAG
+destroy_cluster: false
