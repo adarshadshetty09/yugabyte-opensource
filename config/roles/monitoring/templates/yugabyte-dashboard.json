@@ -1,0 +1,230 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "schemaVersion": 38,
+  "version": 6,
+  "title": "🚀 YugabyteDB Enterprise Monitoring (Dynamic)",
+
+  "templating": {
+    "list": [
+      {
+        "name": "node",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(up, node_name)",
+        "includeAll": true,
+        "multi": true
+      }
+    ]
+  },
+
+  "panels": [
+
+    {
+      "type": "stat",
+      "title": "Masters UP",
+      "targets": [
+        {
+          "expr": "sum(up{job=\"yugabyte-masters\", node_name=~\"$node\"})",
+          "datasource": "Prometheus"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 }
+    },
+
+    {
+      "type": "stat",
+      "title": "TServers UP",
+      "targets": [
+        {
+          "expr": "sum(up{job=\"yugabyte-tservers\", node_name=~\"$node\"})",
+          "datasource": "Prometheus"
+        }
+      ],
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 }
+    },
+
+    {
+      "type": "stat",
+      "title": "Cluster Memory (MB)",
+      "targets": [
+        {
+          "expr": "sum(mem_tracker_server{node_name=~\"$node\"}) / 1024 / 1024",
+          "datasource": "Prometheus"
+        }
+      ],
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 }
+    },
+
+    {
+      "type": "stat",
+      "title": "Raft Threads",
+      "targets": [
+        {
+          "expr": "sum(threads_running_raft{node_name=~\"$node\"})",
+          "datasource": "Prometheus"
+        }
+      ],
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Memory per Node",
+      "targets": [
+        {
+          "expr": "mem_tracker_server{node_name=~\"$node\"} / 1024 / 1024",
+          "legendFormat": "{{node_name}} ({{node_ip}})",
+          "datasource": "Prometheus"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Raft Threads per Node",
+      "targets": [
+        {
+          "expr": "threads_running_raft{node_name=~\"$node\"}",
+          "legendFormat": "{{node_name}} ({{node_ip}})",
+          "datasource": "Prometheus"
+        }
+      ],
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Consensus Traffic",
+      "targets": [
+        {
+          "expr": "rate(proxy_request_bytes_yb_consensus_ConsensusService_UpdateConsensus{node_name=~\"$node\"}[1m])",
+          "legendFormat": "{{node_name}} Req",
+          "datasource": "Prometheus"
+        },
+        {
+          "expr": "rate(proxy_response_bytes_yb_consensus_ConsensusService_UpdateConsensus{node_name=~\"$node\"}[1m])",
+          "legendFormat": "{{node_name}} Resp",
+          "datasource": "Prometheus"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "RPC Queue Pressure",
+      "targets": [
+        {
+          "expr": "sum by(node_name) (rpcs_in_queue_yb_consensus_ConsensusService{node_name=~\"$node\"})",
+          "legendFormat": "{{node_name}}",
+          "datasource": "Prometheus"
+        }
+      ],
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "YSQL TPS",
+      "targets": [
+        {
+          "expr": "sum(rate(handler_latency_yb_tserver_PgClientService_Perform_count{node_name=~\"$node\"}[1m]))",
+          "legendFormat": "TPS",
+          "datasource": "Prometheus"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 20, "w": 8, "h": 6 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "YSQL Avg Latency",
+      "targets": [
+        {
+          "expr": "rate(handler_latency_yb_tserver_PgClientService_Perform_sum{node_name=~\"$node\"}[1m]) / rate(handler_latency_yb_tserver_PgClientService_Perform_count{node_name=~\"$node\"}[1m])",
+          "legendFormat": "Latency",
+          "datasource": "Prometheus"
+        }
+      ],
+      "gridPos": { "x": 8, "y": 20, "w": 8, "h": 6 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "YSQL RPC Queue",
+      "targets": [
+        {
+          "expr": "sum by(node_name) (rpcs_in_queue_yb_tserver_PgClientService{node_name=~\"$node\"})",
+          "legendFormat": "{{node_name}}",
+          "datasource": "Prometheus"
+        }
+      ],
+      "gridPos": { "x": 16, "y": 20, "w": 8, "h": 6 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "YCQL TPS",
+      "targets": [
+        {
+          "expr": "sum(rate(handler_latency_yb_tserver_TabletServerService_Write_count{node_name=~\"$node\"}[1m]))",
+          "legendFormat": "Writes",
+          "datasource": "Prometheus"
+        },
+        {
+          "expr": "sum(rate(handler_latency_yb_tserver_TabletServerService_Read_count{node_name=~\"$node\"}[1m]))",
+          "legendFormat": "Reads",
+          "datasource": "Prometheus"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 26, "w": 12, "h": 6 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Disk Usage",
+      "targets": [
+        {
+          "expr": "sum by(node_name) (rocksdb_current_version_sst_files_size{node_name=~\"$node\"})",
+          "legendFormat": "{{node_name}}",
+          "datasource": "Prometheus"
+        }
+      ],
+      "gridPos": { "x": 12, "y": 26, "w": 12, "h": 6 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Compaction Load",
+      "targets": [
+        {
+          "expr": "rate(rocksdb_compact_read_bytes{node_name=~\"$node\"}[1m])",
+          "legendFormat": "Read",
+          "datasource": "Prometheus"
+        },
+        {
+          "expr": "rate(rocksdb_compact_write_bytes{node_name=~\"$node\"}[1m])",
+          "legendFormat": "Write",
+          "datasource": "Prometheus"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 32, "w": 12, "h": 6 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "CPU Usage",
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total{node_name=~\"$node\"}[1m])",
+          "legendFormat": "{{node_name}} ({{node_ip}})",
+          "datasource": "Prometheus"
+        }
+      ],
+      "gridPos": { "x": 12, "y": 32, "w": 12, "h": 6 }
+    }
+
+  ]
+}

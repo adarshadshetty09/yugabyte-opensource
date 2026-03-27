@@ -12,8 +12,106 @@
     name: grafana
     state: present
 
+# ------------------------------
+# SET LOGIN BEFORE START 🚨
+# ------------------------------
+- name: Configure Grafana admin credentials
+  ini_file:
+    path: /etc/grafana/grafana.ini
+    section: security
+    option: admin_user
+    value: admin
+
+- name: Set Grafana admin password
+  ini_file:
+    path: /etc/grafana/grafana.ini
+    section: security
+    option: admin_password
+    value: admin123
+
+# ------------------------------
+# CREATE REQUIRED DIRECTORIES
+# ------------------------------
+- name: Create datasource provisioning directory
+  file:
+    path: /etc/grafana/provisioning/datasources
+    state: directory
+    owner: grafana
+    group: grafana
+    mode: '0755'
+
+- name: Create dashboard provisioning directory
+  file:
+    path: /etc/grafana/provisioning/dashboards
+    state: directory
+    owner: grafana
+    group: grafana
+    mode: '0755'
+
+- name: Create Grafana dashboards directory
+  file:
+    path: /var/lib/grafana/dashboards
+    state: directory
+    owner: grafana
+    group: grafana
+    mode: '0755'
+
+# ------------------------------
+# DATASOURCE
+# ------------------------------
+- name: Create Prometheus datasource config
+  copy:
+    dest: /etc/grafana/provisioning/datasources/prometheus.yaml
+    content: |
+      apiVersion: 1
+
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          access: proxy
+          url: http://{{ hostvars[groups['monitoring'][0]].ansible_host }}:9090
+          isDefault: true
+          editable: true
+
+# ------------------------------
+# DASHBOARD
+# ------------------------------
+- name: Copy Yugabyte dashboard
+  copy:
+    src: yugabyte-dashboard.json
+    dest: /var/lib/grafana/dashboards/yugabyte-dashboard.json
+    owner: grafana
+    group: grafana
+    mode: '0644'
+
+- name: Create dashboard provisioning config
+  copy:
+    dest: /etc/grafana/provisioning/dashboards/yugabyte.yaml
+    content: |
+      apiVersion: 1
+
+      providers:
+        - name: 'Yugabyte Dashboards'
+          orgId: 1
+          folder: 'Yugabyte'
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards
+
+# ------------------------------
+# START GRAFANA
+# ------------------------------
 - name: Start Grafana
   systemd:
     name: grafana-server
     enabled: yes
     state: started
+
+# ------------------------------
+# FORCE PASSWORD RESET (SAFE)
+# ------------------------------
+- name: Reset Grafana admin password
+  command: grafana-cli admin reset-admin-password admin123
+  ignore_errors: true
