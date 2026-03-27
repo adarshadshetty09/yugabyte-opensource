@@ -38,4 +38,4 @@
   hosts: monitoring
   become: yes
   roles:
-    - ybdb
+    - monitoring   

@@ -1,14 +1,6 @@
 ---
 # tasks file for ybdb
 
-# ------------------------------
-# DB NODES (CLUSTER FIRST)
-# ------------------------------
-
-# Disk setup
-- name: Setup disks for DB nodes
-  import_tasks: mounts.yaml
-  when: "'nodes' in group_names"
 
 # Dependencies
 - name: Install dependencies
@@ -23,11 +15,6 @@
 # Node exporter (DB nodes)
 - name: Install Node Exporter
   import_tasks: node_exporter.yaml
-  when: "'nodes' in group_names"
-
-#  START CLUSTER FIRST
-- name: Start Yugabyte Cluster
-  import_tasks: ybdbCluster.yaml
   when: "'nodes' in group_names"
 
 

@@ -6,11 +6,13 @@
   command: "{{ bin_path }} stop --base_dir={{ base_dir }}"
   become_user: yugabyte
   ignore_errors: true
+  when: destroy_cluster
 
 - name: Destroy Yugabyte
   command: "{{ bin_path }} destroy --base_dir={{ base_dir }}"
   become_user: yugabyte
   ignore_errors: true
+  when: destroy_cluster
 
 # ===============================
 # STEP 2: SAFE CLEANUP
