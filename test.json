@@ -89,7 +89,7 @@
 
     {
       "type": "timeseries",
-      "title": "🔥 YSQL TPS (Real)",
+      "title": "YSQL TPS (Real)",
       "targets": [
         {
           "expr": "sum(rate(handler_latency_yb_tserver_PgClientService_Perform_count[1m]))",
