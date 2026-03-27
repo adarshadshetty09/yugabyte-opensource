@@ -26,10 +26,12 @@
     - /home/yugabyte/var/data
     - /home/yugabyte/var/logs
   ignore_errors: true
+  when: destroy_cluster   
 
 - name: Wait after destroy
   pause:
     seconds: 10
+  when: destroy_cluster  
 
 # ===============================
 # STEP 3: PRIMARY NODE
@@ -41,13 +43,16 @@
     --advertise_address={{ ansible_host }}
     --base_dir={{ base_dir }}
   become_user: yugabyte
+  register: start_output
+  failed_when: false
+  changed_when: "'already running' not in start_output.stdout"
   when: is_primary
 
 - name: Verify primary is running
   command: "{{ bin_path }} status --base_dir={{ base_dir }}"
   become_user: yugabyte
   register: yb_status
-  retries: 15          # ✅ UPDATED (was 10)
+  retries: 15
   delay: 5
   until: "'Running' in yb_status.stdout"
   changed_when: false
@@ -72,10 +77,12 @@
     --join={{ master_ip }}
     --base_dir={{ base_dir }}
   become_user: yugabyte
+  register: join_output
+  failed_when: false
+  changed_when: "'already running' not in join_output.stdout"
   when: not is_primary
-  throttle: 1        
+  throttle: 1
 
-# ✅ NEW TASK (IMPORTANT)
 - name: Wait before checking follower status
   pause:
     seconds: 20
@@ -85,8 +92,8 @@
   command: "{{ bin_path }} status --base_dir={{ base_dir }}"
   become_user: yugabyte
   register: yb_status_follower
-  retries: 20        
-  delay: 10           
+  retries: 20
+  delay: 10
   until: "'Running' in yb_status_follower.stdout"
   changed_when: false
   when: not is_primary
