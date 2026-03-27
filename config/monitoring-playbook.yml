@@ -39,3 +39,9 @@
   become: yes
   roles:
     - monitoring   
+  
+- name: Setup monitoring
+  hosts: nodes
+  become: yes
+  roles:
+    - monitoring   
