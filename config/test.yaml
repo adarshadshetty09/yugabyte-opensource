@@ -1,0 +1,6 @@
+- name: Setup Monitoring Stack
+  hosts: monitor   # or your group name
+  become: yes
+
+  roles:
+    - monitoring
