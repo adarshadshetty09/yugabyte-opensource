@@ -2,12 +2,13 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
-# ✅ THIS WAS MISSING (VERY IMPORTANT)
 alerting:
   alertmanagers:
     - static_configs:
         - targets:
-            - "10.0.0.14:9093"
+{% for host in groups['monitoring'] %}
+          - "{{ hostvars[host].ansible_host }}:9093"
+{% endfor %}
 
 rule_files:
   - "alert.rules.yml"
@@ -20,7 +21,9 @@ scrape_configs:
   - job_name: "prometheus"
     static_configs:
       - targets:
-          - "10.0.0.14:9090"
+{% for host in groups['monitoring'] %}
+          - "{{ hostvars[host].ansible_host }}:9090"
+{% endfor %}
 
   # =============================
   # Node Exporter (System Metrics)
@@ -28,9 +31,9 @@ scrape_configs:
   - job_name: "node-exporter"
     static_configs:
       - targets:
-          - "10.0.0.10:9200"
-          - "10.0.0.11:9200"
-          - "10.0.0.12:9200"
+{% for host in groups['nodes'] %}
+          - "{{ hostvars[host].ansible_host }}:9200"
+{% endfor %}
 
   # =============================
   # YugabyteDB Masters
@@ -39,9 +42,9 @@ scrape_configs:
     metrics_path: /prometheus-metrics
     static_configs:
       - targets:
-          - "10.0.0.10:7000"
-          - "10.0.0.11:7000"
-          - "10.0.0.12:7000"
+{% for host in groups['nodes'] %}
+          - "{{ hostvars[host].ansible_host }}:7000"
+{% endfor %}
 
   # =============================
   # YugabyteDB TServers
@@ -50,9 +53,9 @@ scrape_configs:
     metrics_path: /prometheus-metrics
     static_configs:
       - targets:
-          - "10.0.0.10:9000"
-          - "10.0.0.11:9000"
-          - "10.0.0.12:9000"
+{% for host in groups['nodes'] %}
+          - "{{ hostvars[host].ansible_host }}:9000"
+{% endfor %}
 
   # =============================
   # Blackbox Exporter (Health Checks)
@@ -64,21 +67,23 @@ scrape_configs:
         - http_2xx
     static_configs:
       - targets:
-          - http://10.0.0.10:7000
-          - http://10.0.0.11:7000
-          - http://10.0.0.12:7000
+{% for host in groups['nodes'] %}
+          - "http://{{ hostvars[host].ansible_host }}:7000"
+{% endfor %}
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
       - source_labels: [__param_target]
         target_label: instance
       - target_label: __address__
-        replacement: 10.0.0.14:9115
+        replacement: "{{ hostvars[groups['monitoring'][0]].ansible_host }}:9115"
 
   # =============================
-  # Alertmanager (only for monitoring, not alerts)
+  # Alertmanager
   # =============================
   - job_name: "alertmanager"
     static_configs:
       - targets:
-          - "10.0.0.14:9093"
+{% for host in groups['monitoring'] %}
+          - "{{ hostvars[host].ansible_host }}:9093"
+{% endfor %}
