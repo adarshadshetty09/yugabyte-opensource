@@ -13,7 +13,7 @@
     state: present
 
 # ------------------------------
-# SET LOGIN BEFORE START 🚨
+# SET LOGIN BEFORE START 
 # ------------------------------
 - name: Configure Grafana admin credentials
   ini_file:
