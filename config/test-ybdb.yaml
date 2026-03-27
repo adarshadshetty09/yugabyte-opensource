@@ -1,0 +1,6 @@
+- name: Setup Monitoring Stack
+  hosts: nodes   # or your group name
+  become: yes
+
+  roles:
+    - ybdb
