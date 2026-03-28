@@ -1,5 +1,5 @@
 - name: Run postgres exporter container
-  docker_container:
+  community.docker.docker_container:
     name: postgres-exporter
     image: quay.io/prometheuscommunity/postgres-exporter
     state: started
