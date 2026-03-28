@@ -1,0 +1,12 @@
+[Unit]
+Description=Postgres Exporter
+After=network.target
+
+[Service]
+User=ansible
+Environment=DATA_SOURCE_NAME=postgresql://{{ db_user }}{{ ':' + db_password if db_password else '' }}@127.0.0.1:5433/{{ db_name }}?sslmode=disable
+ExecStart=/usr/local/bin/postgres_exporter
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
