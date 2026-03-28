@@ -50,9 +50,6 @@ Yugabyte OpenSource Automation
 chmod 600 ~/.ssh/id_rsa
 ```
 
-
-
-
 ```
           ┌──────────────────────┐
           │   Monitoring Node    │
@@ -73,4 +70,24 @@ chmod 600 ~/.ssh/id_rsa
 │ Yugabyte │ │ Yugabyte │ │ Yugabyte │
 │ Node Exp │ │ Node Exp │ │ Node Exp │
 └──────────┘ └──────────┘ └──────────┘
+```
+
+
+```
+                ┌────────────────────┐
+                │   YugabyteDB       │
+                │ (Masters + TServer)│
+                └─────────┬──────────┘
+                          │
+        ┌─────────────────┼─────────────────┐
+        │                                   │
+        ▼                                   ▼
+Native Metrics                     Postgres Exporter
+(7000 / 9000)                     (9187)
+        │                                   │
+        └──────────────┬────────────────────┘
+                       ▼
+                 Prometheus
+                       ▼
+                   Grafana
 ```
