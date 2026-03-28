@@ -4,9 +4,16 @@ After=network.target
 
 [Service]
 User=ansible
-Environment=DATA_SOURCE_NAME=postgresql://{{ db_user }}:{{ db_password }}@{{ ansible_host }}:5433/{{ db_name }}?sslmode=disable
+Environment=DATA_SOURCE_NAME=postgresql://yugabyte:Admin123@10.0.0.10:5433/yugabyte?sslmode=disable
 
-ExecStart=/usr/local/bin/postgres_exporter --disable-default-metrics
+ExecStart=/usr/local/bin/postgres_exporter \
+  --disable-default-metrics \
+  --no-collector.pg_stat_statements \
+  --no-collector.stat_bgwriter \
+  --no-collector.stat_database \
+  --no-collector.locks \
+  --no-collector.replication \
+  --no-collector.postmaster
 
 Restart=always
 
