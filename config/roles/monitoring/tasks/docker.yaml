@@ -28,3 +28,21 @@
     name: ansible
     groups: docker
     append: yes
+
+# ===============================
+#  FIX: Required for docker_container module
+# ===============================
+
+- name: Install Python3 and pip
+  yum:
+    name:
+      - python3
+      - python3-pip
+    state: present
+
+- name: Install Python libraries (docker + requests)
+  pip:
+    name:
+      - docker
+      - requests
+    executable: pip3
