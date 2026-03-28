@@ -1,7 +1,6 @@
 ---
 # tasks file for ybdb
 
-
 # Dependencies
 - name: Install dependencies
   yum:
@@ -12,11 +11,20 @@
     state: present
   when: "'nodes' in group_names"
 
+#  NEW: Install Docker (DB nodes)
+- name: Install Docker
+  import_tasks: docker.yaml
+  when: "'nodes' in group_names"
+
+#  NEW: Postgres exporter (DB nodes)
+- name: Install Postgres Exporter
+  import_tasks: postgres_exporter.yaml
+  when: "'nodes' in group_names"
+
 # Node exporter (DB nodes)
 - name: Install Node Exporter
   import_tasks: node_exporter.yaml
   when: "'nodes' in group_names"
-
 
 # ------------------------------
 # MONITORING (RUN AFTER CLUSTER)

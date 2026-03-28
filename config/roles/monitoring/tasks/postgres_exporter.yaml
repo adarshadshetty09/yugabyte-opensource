@@ -1,0 +1,10 @@
+- name: Run postgres exporter container
+  docker_container:
+    name: postgres-exporter
+    image: quay.io/prometheuscommunity/postgres-exporter
+    state: started
+    restart_policy: always
+    ports:
+      - "9187:9187"
+    env:
+      DATA_SOURCE_NAME: "postgresql://yugabyte:PASSWORD@localhost:5433/yugabyte?sslmode=disable"
