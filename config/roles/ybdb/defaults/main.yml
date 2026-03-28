@@ -27,3 +27,8 @@ master_ip: "{{ hostvars[groups['nodes'][0]].ansible_host }}"
 
 #  CONTROL FLAG
 destroy_cluster: false
+
+
+cloud: cloud1
+
+cloud_location: "{{ cloud }}.{{ hostvars[inventory_hostname].region }}.{{ hostvars[inventory_hostname].zone }}"
