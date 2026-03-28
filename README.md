@@ -91,3 +91,14 @@ Native Metrics                     Postgres Exporter
                        ▼
                    Grafana
 ```
+
+
+
+```
+mount.yaml
+ ├── detect disk (10G + unused)
+ ├── set disks variable
+ ├── partition
+ ├── filesystem
+ ├── mount
+```

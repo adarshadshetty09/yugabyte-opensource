@@ -4,93 +4,152 @@
 # ==============================
 
 # ------------------------------
-# CHECK EXISTING PARTITIONS (NEW)
+# CHECK IF ALREADY MOUNTED
 # ------------------------------
-- name: Check existing partitions
-  command: "lsblk -nr {{ item.device }}"
-  register: disk_state
+- name: Check if /mnt/yba-data already mounted
+  command: mount | grep /mnt/yba-data
+  register: mount_check
+  ignore_errors: true
   changed_when: false
-  loop: "{{ disks }}"
 
 # ------------------------------
-# CREATE GPT LABEL (ONLY IF EMPTY)
+# RUN DISK SETUP ONLY IF NOT MOUNTED
 # ------------------------------
-- name: Ensure GPT label exists
-  community.general.parted:
-    device: "{{ item.item.device }}"
-    label: gpt
-  loop: "{{ disk_state.results }}"
-  when: item.stdout_lines | length == 1
+- block:
+
+    # ------------------------------
+    # AUTO DETECT 10GB UNUSED DISK
+    # ------------------------------
+    - name: Detect 10GB unused disk
+      shell: |
+        lsblk -dn -o NAME,SIZE | while read name size; do
+          if [ "$size" = "10G" ] && ! lsblk /dev/$name | grep -q part; then
+            echo /dev/$name
+            break
+          fi
+        done
+      register: free_disk
+      changed_when: false
+
+    # ------------------------------
+    # FAIL IF NO DISK FOUND
+    # ------------------------------
+    - name: Fail if no free disk found
+      fail:
+        msg: "No unused 10GB disk found!"
+      when: free_disk.stdout == ""
+
+    # ------------------------------
+    # BUILD disks VARIABLE
+    # ------------------------------
+    - name: Set disk fact
+      set_fact:
+        disks:
+          - device: "{{ free_disk.stdout }}"
+            part: "{{ free_disk.stdout }}1"
+            mount: "/mnt/yba-data"
+
+    # ------------------------------
+    # CHECK EXISTING PARTITIONS
+    # ------------------------------
+    - name: Check existing partitions
+      command: "lsblk -nr {{ item.device }}"
+      register: disk_state
+      changed_when: false
+      loop: "{{ disks }}"
+
+    # ------------------------------
+    # CREATE GPT LABEL (ONLY IF EMPTY)
+    # ------------------------------
+    - name: Ensure GPT label exists
+      community.general.parted:
+        device: "{{ item.item.device }}"
+        label: gpt
+      loop: "{{ disk_state.results }}"
+      when: item.stdout is not search("part")
+
+    # ------------------------------
+    # CREATE PARTITION (ONLY IF MISSING)
+    # ------------------------------
+    - name: Ensure partition exists
+      community.general.parted:
+        device: "{{ item.item.device }}"
+        number: 1
+        state: present
+        part_type: primary
+      loop: "{{ disk_state.results }}"
+      when: item.stdout is not search("part")
+
+    # ------------------------------
+    # CHECK FILESYSTEM
+    # ------------------------------
+    - name: Check filesystem type
+      command: "lsblk -no FSTYPE {{ item.part }}"
+      register: fs_check
+      changed_when: false
+      loop: "{{ disks }}"
+
+    # ------------------------------
+    # CREATE FILESYSTEM (ONLY IF MISSING)
+    # ------------------------------
+    - name: Create filesystem if not exists
+      filesystem:
+        fstype: ext4
+        dev: "{{ item.item.part }}"
+      loop: "{{ fs_check.results }}"
+      when: item.stdout == ""
+
+    # ------------------------------
+    # CREATE MOUNT DIRECTORIES
+    # ------------------------------
+    - name: Ensure mount directories exist
+      file:
+        path: "{{ item.mount }}"
+        state: directory
+        owner: yugabyte
+        group: yugabyte
+        mode: '0755'
+      loop: "{{ disks }}"
+
+    # ------------------------------
+    # MOUNT + FSTAB
+    # ------------------------------
+    - name: Mount disks and persist in fstab
+      ansible.posix.mount:
+        path: "{{ item.mount }}"
+        src: "{{ item.part }}"
+        fstype: ext4
+        opts: defaults,nofail
+        state: mounted
+      loop: "{{ disks }}"
+
+    # ------------------------------
+    # OWNERSHIP
+    # ------------------------------
+    - name: Set ownership on mount points
+      file:
+        path: "{{ item.mount }}"
+        owner: yugabyte
+        group: yugabyte
+        recurse: yes
+      loop: "{{ disks }}"
+
+    # ------------------------------
+    # CREATE TMP DIRECTORY
+    # ------------------------------
+    - name: Create tmp directory
+      file:
+        path: /mnt/yba-data/tmp
+        state: directory
+        owner: yugabyte
+        group: yugabyte
+        mode: '0755'
+
+  when: mount_check.rc != 0
+
 
 # ------------------------------
-# CREATE PARTITION (ONLY IF MISSING)
-# ------------------------------
-- name: Ensure partition exists
-  community.general.parted:
-    device: "{{ item.item.device }}"
-    number: 1
-    state: present
-    part_type: primary
-  loop: "{{ disk_state.results }}"
-  when: item.stdout_lines | length == 1
-
-# ------------------------------
-# CREATE FILESYSTEM (SAFE)
-# ------------------------------
-- name: Ensure filesystem exists
-  ansible.builtin.filesystem:
-    fstype: ext4
-    dev: "{{ item.part }}"
-  loop: "{{ disks }}"
-
-# ------------------------------
-# CREATE MOUNT DIRECTORIES
-# ------------------------------
-- name: Ensure mount directories exist
-  ansible.builtin.file:
-    path: "{{ item.mount }}"
-    state: directory
-    owner: yugabyte
-    group: yugabyte
-    mode: '0755'
-  loop: "{{ disks }}"
-
-# ------------------------------
-# MOUNT + FSTAB (IDEMPOTENT)
-# ------------------------------
-- name: Mount disks and persist in fstab
-  ansible.posix.mount:
-    path: "{{ item.mount }}"
-    src: "{{ item.part }}"
-    fstype: ext4
-    opts: defaults,nofail
-    state: mounted
-  loop: "{{ disks }}"
-
-# ------------------------------
-# OWNERSHIP (RECURSIVE)
-# ------------------------------
-- name: Set ownership on mount points
-  ansible.builtin.file:
-    path: "{{ item.mount }}"
-    owner: yugabyte
-    group: yugabyte
-    recurse: yes
-  loop: "{{ disks }}"
-
-# ------------------------------
-# CREATE TMP DIRECTORY
-# ------------------------------
-- name: Create tmp directory
-  ansible.builtin.file:
-    path: /mnt/yba-data/tmp
-    state: directory
-    owner: yugabyte
-    group: yugabyte
-    mode: '0755'
-
-# ------------------------------
-# SELINUX (SAFE)
+# SELINUX (ALWAYS SAFE TO RUN)
 # ------------------------------
 - name: Set SELinux to permissive
   ansible.posix.selinux:
