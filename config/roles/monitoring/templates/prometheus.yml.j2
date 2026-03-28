@@ -87,3 +87,13 @@ scrape_configs:
 {% for host in groups['monitoring'] %}
           - "{{ hostvars[host].ansible_host }}:9093"
 {% endfor %}
+
+  # =============================
+  # Postgres Exporter (YSQL Metrics)
+  # =============================
+  - job_name: "postgres-exporter"
+    static_configs:
+      - targets:
+{% for host in groups['nodes'] %}
+          - "{{ hostvars[host].ansible_host }}:9187"
+{% endfor %}
