@@ -4,9 +4,9 @@
 # Disk setup
 - name: Setup disks for DB nodes
   import_tasks: mounts.yaml
-  when: "'nodes' in group_names"
+  when: "'dbs' in group_names"
 
 # ADD THIS 
 - name: Run Yugabyte cluster setup
   import_tasks: ybdbCluster.yaml
-  when: "'nodes' in group_names"
+  when: "'dbs' in group_names"
