@@ -7,7 +7,7 @@
 # CHECK IF ALREADY MOUNTED
 # ------------------------------
 - name: Check if /mnt/yba-data already mounted
-  command: mount | grep /mnt/yba-data
+  shell: mount | grep /mnt/yba-data
   register: mount_check
   ignore_errors: true
   changed_when: false
