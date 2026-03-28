@@ -11,10 +11,6 @@
     state: present
   when: "'nodes' in group_names"
 
-#  NEW: Install Docker (DB nodes)
-- name: Install Docker
-  import_tasks: docker.yaml
-  when: "'nodes' in group_names"
 
 #  NEW: Postgres exporter (DB nodes)
 - name: Install Postgres Exporter

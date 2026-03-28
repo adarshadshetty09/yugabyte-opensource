@@ -1,9 +1,43 @@
-- name: Run postgres exporter container
-  community.docker.docker_container:
-    name: postgres-exporter
-    image: quay.io/prometheuscommunity/postgres-exporter
+- name: Download postgres exporter
+  get_url:
+    url: https://github.com/prometheus-community/postgres_exporter/releases/download/v0.15.0/postgres_exporter-0.15.0.linux-amd64.tar.gz
+    dest: /tmp/postgres_exporter.tar.gz
+
+- name: Extract postgres exporter
+  unarchive:
+    src: /tmp/postgres_exporter.tar.gz
+    dest: /opt/
+    remote_src: yes
+
+- name: Move binary
+  copy:
+    src: /opt/postgres_exporter-0.15.0.linux-amd64/postgres_exporter
+    dest: /usr/local/bin/postgres_exporter
+    mode: '0755'
+    remote_src: yes
+
+- name: Create postgres_exporter service
+  copy:
+    dest: /etc/systemd/system/postgres_exporter.service
+    content: |
+      [Unit]
+      Description=Postgres Exporter
+      After=network.target
+
+      [Service]
+      User=ansible
+      Environment=DATA_SOURCE_NAME=postgresql://yugabyte@127.0.0.1:5433/yugabyte?sslmode=disable
+      ExecStart=/usr/local/bin/postgres_exporter
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Reload systemd
+  command: systemctl daemon-reload
+
+- name: Enable and start postgres exporter
+  systemd:
+    name: postgres_exporter
+    enabled: yes
     state: started
-    restart_policy: always
-    network_mode: host
-    env:
-      DATA_SOURCE_NAME: "postgresql://yugabyte:PASSWORD@127.0.0.1:5433/yugabyte?sslmode=disable"
