@@ -4,7 +4,8 @@ After=network.target
 
 [Service]
 User=ansible
-Environment=DATA_SOURCE_NAME=postgresql://{{ db_user }}{{ ':' + db_password if db_password else '' }}@127.0.0.1:5433/{{ db_name }}?sslmode=disable
+Environment=DATA_SOURCE_NAME=postgresql://{{ db_user }}{{ ':' + db_password if db_password else '' }}@{{ ansible_host }}:5433/{{ db_name }}?sslmode=disable
+Environment=PG_EXPORTER_AUTO_DISCOVER_DATABASES=true
 ExecStart=/usr/local/bin/postgres_exporter
 Restart=always
 
