@@ -7,4 +7,4 @@
     ports:
       - "9187:9187"
     env:
-      DATA_SOURCE_NAME: "postgresql://yugabyte:PASSWORD@localhost:5433/yugabyte?sslmode=disable"
+      DATA_SOURCE_NAME: "postgresql://yugabyte:PASSWORD@127.0.0.1:5433/yugabyte?sslmode=disable"
