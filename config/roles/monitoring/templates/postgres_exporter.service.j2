@@ -5,7 +5,10 @@ After=network.target
 [Service]
 User=ansible
 Environment=DATA_SOURCE_NAME=postgresql://{{ db_user }}:{{ db_password }}@{{ ansible_host }}:5433/{{ db_name }}?sslmode=disable
-ExecStart=/usr/local/bin/postgres_exporter
+
+ExecStart=/usr/local/bin/postgres_exporter \
+  --disable-default-metrics
+
 Restart=always
 
 [Install]
