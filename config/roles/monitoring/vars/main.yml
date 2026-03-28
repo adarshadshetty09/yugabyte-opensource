@@ -1,2 +1,5 @@
 ---
 # vars file for ybdb
+db_user: yugabyte
+db_password: "Admin123"   # or put password
+db_name: yugabyte

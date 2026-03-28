@@ -17,21 +17,9 @@
     remote_src: yes
 
 - name: Create postgres_exporter service
-  copy:
+  template:
+    src: postgres_exporter.service.j2
     dest: /etc/systemd/system/postgres_exporter.service
-    content: |
-      [Unit]
-      Description=Postgres Exporter
-      After=network.target
-
-      [Service]
-      User=ansible
-      Environment=DATA_SOURCE_NAME=postgresql://yugabyte@127.0.0.1:5433/yugabyte?sslmode=disable
-      ExecStart=/usr/local/bin/postgres_exporter
-      Restart=always
-
-      [Install]
-      WantedBy=multi-user.target
 
 - name: Reload systemd
   command: systemctl daemon-reload
