@@ -36,6 +36,16 @@ scrape_configs:
 {% endfor %}
 
   # =============================
+  # POSTGRES-EXPORTER (System Metrics)
+  # =============================
+  - job_name: "POSTGRES-EXPORTER"
+    static_configs:
+      - targets:
+{% for host in groups['nodes'] %}
+          - "{{ hostvars[host].ansible_host }}:9187"
+{% endfor %}
+
+  # =============================
   # YugabyteDB Masters
   # =============================
   - job_name: "yugabyte-masters"
