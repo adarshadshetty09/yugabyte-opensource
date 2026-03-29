@@ -103,103 +103,148 @@
       "targets": [{ "expr": "rate(process_cpu_seconds_total{node_name=~\"$node\"}[1m])", "legendFormat": "{{node_name}} ({{node_ip}})" }],
       "gridPos": { "x": 12, "y": 32, "w": 12, "h": 6 }
     },
-    {
-  "type": "table",
-  "title": "📦 Node Storage (SST + RAM + OPS)",
-  "datasource": "Prometheus",
 
-  "targets": [
     {
-      "expr": "max by(instance) (up{job=\"yugabyte-tservers\", node_name=~\"$node\"})",
-      "refId": "A"
-    },
-    {
-      "expr": "max by(instance) (process_resident_memory_bytes{job=\"yugabyte-tservers\", node_name=~\"$node\"})",
-      "refId": "B"
-    },
-    {
-      "expr": "sum by(instance) (rocksdb_current_version_sst_files_size{job=\"yugabyte-tservers\", node_name=~\"$node\"})",
-      "refId": "C"
-    },
-    {
-      "expr": "sum by(instance) (rate(handler_latency_yb_tserver_TabletServerService_Read_count{job=\"yugabyte-tservers\", node_name=~\"$node\"}[1m]))",
-      "refId": "D"
-    },
-    {
-      "expr": "sum by(instance) (rate(handler_latency_yb_tserver_TabletServerService_Write_count{job=\"yugabyte-tservers\", node_name=~\"$node\"}[1m]))",
-      "refId": "E"
-    }
-  ],
-
-  "transformations": [
-    {
-      "id": "reduce",
-      "options": {
-        "reducers": ["lastNotNull"]
-      }
-    },
-    {
-      "id": "joinByField",
-      "options": {
-        "byField": "instance"
-      }
-    },
-    {
-      "id": "organize",
-      "options": {
-        "renameByName": {
-          "instance": "Node",
-          "Value #A": "Status",
-          "Value #B": "RAM",
-          "Value #C": "SST Size",
-          "Value #D": "Read OPS",
-          "Value #E": "Write OPS"
+      "type": "bargauge",
+      "title": "🔥 INSERT per Node (Total)",
+      "targets": [
+        {
+          "expr": "sum by (node) (label_replace(handler_latency_yb_ysqlserver_SQLProcessor_InsertStmt_count, \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
+          "legendFormat": "{{node}}"
         }
-      }
+      ],
+      "gridPos": { "x": 0, "y": 38, "w": 8, "h": 6 }
+    },
+
+    {
+      "type": "bargauge",
+      "title": "🔥 SELECT per Node (Total)",
+      "targets": [
+        {
+          "expr": "sum by (node) (label_replace(handler_latency_yb_ysqlserver_SQLProcessor_SelectStmt_count, \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
+          "legendFormat": "{{node}}"
+        }
+      ],
+      "gridPos": { "x": 8, "y": 38, "w": 8, "h": 6 }
+    },
+
+    {
+      "type": "bargauge",
+      "title": "🔥 TPS per Node",
+      "targets": [
+        {
+          "expr": "sum by (node) (label_replace(rate(handler_latency_yb_ysqlserver_SQLProcessor_Transactions_count[5m]), \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
+          "legendFormat": "{{node}}"
+        }
+      ],
+      "gridPos": { "x": 16, "y": 38, "w": 8, "h": 6 }
+    },
+    {
+"type": "table",
+"title": "📦 Node Storage (SST + RAM + OPS)",
+"datasource": "Prometheus",
+"targets": [
+{
+"expr": "up{job=\"yugabyte-tservers\", node_name=~\"$node\"}",
+"refId": "A"
+},
+{
+"expr": "process_resident_memory_bytes{job=\"yugabyte-tservers\", node_name=~\"$node\"}",
+"refId": "B"
+},
+{
+"expr": "sum by (instance) (rocksdb_current_version_sst_files_size{job=\"yugabyte-tservers\", node_name=~\"$node\"})",
+"refId": "C"
+},
+{
+"expr": "sum by (instance) (rate(handler_latency_yb_tserver_TabletServerService_Read_count{node_name=~\"$node\"}[1m]))",
+"refId": "D"
+},
+{
+"expr": "sum by (instance) (rate(handler_latency_yb_tserver_TabletServerService_Write_count{node_name=~\"$node\"}[1m]))",
+"refId": "E"
+}
+],
+"transformations": [
+  {
+    "id": "labelsToFields",
+    "options": {}
+  },
+  {
+    "id": "reduce",
+    "options": {
+      "reducers": ["lastNotNull"],
+      "fields": ""
     }
-  ],
-
-  "fieldConfig": {
-    "overrides": [
-      {
-        "matcher": { "id": "byName", "options": "Status" },
-        "properties": [
-          {
-            "id": "mappings",
-            "value": [
-              {
-                "type": "value",
-                "options": {
-                  "1": { "text": "🟢 Live", "color": "green" },
-                  "0": { "text": "🔴 Down", "color": "red" }
-                }
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "matcher": { "id": "byName", "options": "RAM" },
-        "properties": [{ "id": "unit", "value": "bytes" }]
-      },
-      {
-        "matcher": { "id": "byName", "options": "SST Size" },
-        "properties": [{ "id": "unit", "value": "bytes" }]
-      }
-    ]
   },
-
+  {
+    "id": "joinByField",
+    "options": {
+      "byField": "instance"
+    }
+  },
+{
+  "id": "organize",
   "options": {
-    "showHeader": true
-  },
-
-  "gridPos": {
-    "x": 0,
-    "y": 44,
-    "w": 24,
-    "h": 10
+    "renameByName": {
+      "instance": "Node",
+      "Value #A": "Status",
+      "Value #B": "RAM",
+      "Value #C": "SST Size",
+      "Value #D": "Read OPS",
+      "Value #E": "Write OPS"
+    },
+    "indexByName": {
+      "Node": 0,
+      "Status": 1,
+      "RAM": 2,
+      "SST Size": 3,
+      "Read OPS": 4,
+      "Write OPS": 5
+    }
   }
 }
+],
+"fieldConfig": {
+"overrides": [
+{
+"matcher": { "id": "byName", "options": "Status" },
+"properties": [
+{
+"id": "mappings",
+"value": [
+{
+"type": "value",
+"options": {
+"1": { "text": "🟢 Live", "color": "green" },
+"0": { "text": "🔴 Down", "color": "red" }
+}
+}
+]
+}
+]
+},
+{
+"matcher": { "id": "byName", "options": "RAM" },
+"properties": [{ "id": "unit", "value": "bytes" }]
+},
+{
+"matcher": { "id": "byName", "options": "SST Size" },
+"properties": [{ "id": "unit", "value": "bytes" }]
+}
+]
+},
+"options": {
+"showHeader": true
+},
+"gridPos": {
+"x": 0,
+"y": 44,
+"w": 24,
+"h": 10
+}
+}
+
 
   ]
 }
