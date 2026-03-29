@@ -225,41 +225,163 @@
       ],
       "gridPos": { "x": 12, "y": 32, "w": 12, "h": 6 }
     },
-{
-  "type": "timeseries",
-  "title": "🔥 INSERT per Node",
+    {
+  "type": "bargauge",
+  "title": "🔥 INSERT per Node (Total)",
   "targets": [
     {
-      "expr": "rate(handler_latency_yb_ysqlserver_SQLProcessor_InsertStmt_count{node_name=~\"$node\"}[1m])",
-      "legendFormat": "{{node_name}} ({{node_ip}})",
+      "expr": "sum by (node) (label_replace(handler_latency_yb_ysqlserver_SQLProcessor_InsertStmt_count, \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
+      "legendFormat": "{{node}}",
       "datasource": "Prometheus"
     }
   ],
-  "gridPos": { "x": 0, "y": 38, "w": 8, "h": 6 }
+  "gridPos": { "x": 0, "y": 38, "w": 8, "h": 6 },
+  "options": {
+    "orientation": "horizontal",
+    "displayMode": "gradient",
+    "reduceOptions": {
+      "calcs": ["lastNotNull"],
+      "fields": "",
+      "values": false
+    }
+  },
+  "fieldConfig": {
+    "defaults": {
+      "unit": "none",
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          { "color": "green", "value": null },
+          { "color": "yellow", "value": 1000 },
+          { "color": "red", "value": 3000 }
+        ]
+      }
+    }
+  }
 },
 {
-  "type": "timeseries",
-  "title": "🔥 SELECT per Node",
+  "type": "bargauge",
+  "title": "🔥 INSERT per Node (Total)",
   "targets": [
     {
-      "expr": "rate(handler_latency_yb_ysqlserver_SQLProcessor_SelectStmt_count{node_name=~\"$node\"}[1m])",
-      "legendFormat": "{{node_name}} ({{node_ip}})",
+      "expr": "sum by (node) (label_replace(handler_latency_yb_ysqlserver_SQLProcessor_InsertStmt_count, \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
+      "legendFormat": "{{node}}",
       "datasource": "Prometheus"
     }
   ],
-  "gridPos": { "x": 8, "y": 38, "w": 8, "h": 6 }
+  "gridPos": { "x": 0, "y": 38, "w": 8, "h": 6 },
+  "options": {
+    "orientation": "horizontal",
+    "displayMode": "gradient",
+    "reduceOptions": {
+      "calcs": ["lastNotNull"],
+      "fields": "",
+      "values": false
+    }
+  },
+  "fieldConfig": {
+    "defaults": {
+      "unit": "none",
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          { "color": "green", "value": null },
+          { "color": "yellow", "value": 1000 },
+          { "color": "red", "value": 3000 }
+        ]
+      }
+    }
+  }
 },
 {
-  "type": "timeseries",
+  "type": "bargauge",
   "title": "🔥 TPS per Node",
   "targets": [
     {
-      "expr": "rate(handler_latency_yb_ysqlserver_SQLProcessor_Transactions_count{node_name=~\"$node\"}[1m])",
-      "legendFormat": "{{node_name}} ({{node_ip}})",
+      "expr": "sum by (node) (label_replace(rate(handler_latency_yb_ysqlserver_SQLProcessor_Transactions_count[5m]), \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
+      "legendFormat": "{{node}}",
       "datasource": "Prometheus"
     }
   ],
-  "gridPos": { "x": 16, "y": 38, "w": 8, "h": 6 }
+  "gridPos": { "x": 16, "y": 38, "w": 8, "h": 6 },
+  "options": {
+    "orientation": "horizontal",
+    "displayMode": "gradient",
+    "reduceOptions": {
+      "calcs": ["lastNotNull"],
+      "fields": "",
+      "values": false
+    }
+  },
+  "fieldConfig": {
+    "defaults": {
+      "unit": "ops",
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          { "color": "green", "value": null },
+          { "color": "yellow", "value": 10 },
+          { "color": "red", "value": 50 }
+        ]
+      }
+    }
+  }
+},
+{
+  "type": "timeseries",
+  "title": "🔥 DB Traffic per Node (Combined)",
+  "targets": [
+    {
+      "expr": "sum by (node) (label_replace(handler_latency_yb_ysqlserver_SQLProcessor_InsertStmt_count, \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
+      "legendFormat": "INSERT - {{node}}"
+    },
+    {
+      "expr": "sum by (node) (label_replace(handler_latency_yb_ysqlserver_SQLProcessor_SelectStmt_count, \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
+      "legendFormat": "SELECT - {{node}}"
+    },
+    {
+      "expr": "sum by (node) (label_replace(rate(handler_latency_yb_ysqlserver_SQLProcessor_Transactions_count[5m]), \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
+      "legendFormat": "TPS - {{node}}"
+    }
+  ],
+  "options": {
+    "legend": {
+      "displayMode": "list",
+      "placement": "bottom"
+    }
+  },
+  "fieldConfig": {
+    "defaults": {
+      "unit": "short"
+    }
+  },
+  "gridPos": { "x": 0, "y": 45, "w": 24, "h": 8 }
+},
+{
+  "type": "stat",
+  "title": "🔥 HOT NODE (Most Inserts)",
+  "targets": [
+    {
+      "expr": "topk(1, sum by (node) (label_replace(handler_latency_yb_ysqlserver_SQLProcessor_InsertStmt_count, \"node\", \"$1\", \"instance\", \"(.*):.*\")))",
+      "legendFormat": "{{node}}"
+    }
+  ],
+  "options": {
+    "reduceOptions": {
+      "calcs": ["lastNotNull"]
+    }
+  },
+  "fieldConfig": {
+    "defaults": {
+      "thresholds": {
+        "steps": [
+          { "color": "green", "value": null },
+          { "color": "red", "value": 3000 }
+        ]
+      }
+    }
+  },
+  "gridPos": { "x": 0, "y": 54, "w": 6, "h": 4 }
 }
 
   ]
