@@ -20,3 +20,12 @@
   systemd:
     name: blackbox_exporter
     state: restarted
+
+
+- name: Reload systemd
+  command: systemctl daemon-reload
+
+- name: Restart postgres exporter
+  systemd:
+    name: postgres_exporter
+    state: restarted

@@ -34,3 +34,13 @@ alertmanager_port: 9093
 # -------------------------------
 blackbox_port: 9115
 
+
+#  postgres_exporter
+exporter_version: "0.15.0"
+exporter_dir: "/opt/postgres_exporter-{{ exporter_version }}.linux-amd64"
+
+postgres_host: "{{ ansible_host }}"
+postgres_port: "5433"
+postgres_db: "yugabyte"
+postgres_user: "yugabyte"
+

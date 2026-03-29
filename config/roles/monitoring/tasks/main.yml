@@ -12,10 +12,10 @@
   when: "'nodes' in group_names"
 
 
-# #  NEW: Postgres exporter (DB nodes)
-# - name: Install Postgres Exporter
-#   import_tasks: postgres_exporter.yaml
-#   when: "'nodes' in group_names"
+#  NEW: Postgres exporter (DB nodes)
+- name: Install Postgres Exporter
+  import_tasks: postgres_exporter.yaml
+  when: "'nodes' in group_names"
 
 # Node exporter (DB nodes)
 - name: Install Node Exporter
