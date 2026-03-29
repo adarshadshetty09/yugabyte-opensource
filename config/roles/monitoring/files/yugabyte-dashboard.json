@@ -224,7 +224,43 @@
         }
       ],
       "gridPos": { "x": 12, "y": 32, "w": 12, "h": 6 }
+    },
+{
+  "type": "timeseries",
+  "title": "🔥 INSERT per Node",
+  "targets": [
+    {
+      "expr": "rate(handler_latency_yb_ysqlserver_SQLProcessor_InsertStmt_count{node_name=~\"$node\"}[1m])",
+      "legendFormat": "{{node_name}} ({{node_ip}})",
+      "datasource": "Prometheus"
     }
+  ],
+  "gridPos": { "x": 0, "y": 38, "w": 8, "h": 6 }
+},
+{
+  "type": "timeseries",
+  "title": "🔥 SELECT per Node",
+  "targets": [
+    {
+      "expr": "rate(handler_latency_yb_ysqlserver_SQLProcessor_SelectStmt_count{node_name=~\"$node\"}[1m])",
+      "legendFormat": "{{node_name}} ({{node_ip}})",
+      "datasource": "Prometheus"
+    }
+  ],
+  "gridPos": { "x": 8, "y": 38, "w": 8, "h": 6 }
+},
+{
+  "type": "timeseries",
+  "title": "🔥 TPS per Node",
+  "targets": [
+    {
+      "expr": "rate(handler_latency_yb_ysqlserver_SQLProcessor_Transactions_count{node_name=~\"$node\"}[1m])",
+      "legendFormat": "{{node_name}} ({{node_ip}})",
+      "datasource": "Prometheus"
+    }
+  ],
+  "gridPos": { "x": 16, "y": 38, "w": 8, "h": 6 }
+}
 
   ]
 }
