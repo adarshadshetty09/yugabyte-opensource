@@ -2,7 +2,7 @@
   "annotations": { "list": [] },
   "editable": true,
   "schemaVersion": 38,
-  "version": 6,
+  "version": 7,
   "title": "🚀 YugabyteDB Enterprise Monitoring (Dynamic)",
 
   "templating": {
@@ -20,369 +20,125 @@
 
   "panels": [
 
-    {
-      "type": "stat",
-      "title": "Masters UP",
-      "targets": [
-        {
-          "expr": "sum(up{job=\"yugabyte-masters\", node_name=~\"$node\"})",
-          "datasource": "Prometheus"
-        }
-      ],
+    { "type": "stat", "title": "Masters UP",
+      "targets": [{ "expr": "sum(up{job=\"yugabyte-masters\", node_name=~\"$node\"})" }],
       "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 }
     },
 
-    {
-      "type": "stat",
-      "title": "TServers UP",
-      "targets": [
-        {
-          "expr": "sum(up{job=\"yugabyte-tservers\", node_name=~\"$node\"})",
-          "datasource": "Prometheus"
-        }
-      ],
+    { "type": "stat", "title": "TServers UP",
+      "targets": [{ "expr": "sum(up{job=\"yugabyte-tservers\", node_name=~\"$node\"})" }],
       "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 }
     },
 
-    {
-      "type": "stat",
-      "title": "Cluster Memory (MB)",
-      "targets": [
-        {
-          "expr": "sum(mem_tracker_server{node_name=~\"$node\"}) / 1024 / 1024",
-          "datasource": "Prometheus"
-        }
-      ],
+    { "type": "stat", "title": "Cluster Memory (MB)",
+      "targets": [{ "expr": "sum(mem_tracker_server{node_name=~\"$node\"}) / 1024 / 1024" }],
       "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 }
     },
 
-    {
-      "type": "stat",
-      "title": "Raft Threads",
-      "targets": [
-        {
-          "expr": "sum(threads_running_raft{node_name=~\"$node\"})",
-          "datasource": "Prometheus"
-        }
-      ],
+    { "type": "stat", "title": "Raft Threads",
+      "targets": [{ "expr": "sum(threads_running_raft{node_name=~\"$node\"})" }],
       "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 }
     },
 
-    {
-      "type": "timeseries",
-      "title": "Memory per Node",
-      "targets": [
-        {
-          "expr": "mem_tracker_server{node_name=~\"$node\"} / 1024 / 1024",
-          "legendFormat": "{{node_name}} ({{node_ip}})",
-          "datasource": "Prometheus"
-        }
-      ],
+    { "type": "timeseries", "title": "Memory per Node",
+      "targets": [{ "expr": "mem_tracker_server{node_name=~\"$node\"} / 1024 / 1024", "legendFormat": "{{node_name}} ({{node_ip}})" }],
       "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 }
     },
 
-    {
-      "type": "timeseries",
-      "title": "Raft Threads per Node",
-      "targets": [
-        {
-          "expr": "threads_running_raft{node_name=~\"$node\"}",
-          "legendFormat": "{{node_name}} ({{node_ip}})",
-          "datasource": "Prometheus"
-        }
-      ],
+    { "type": "timeseries", "title": "Raft Threads per Node",
+      "targets": [{ "expr": "threads_running_raft{node_name=~\"$node\"}", "legendFormat": "{{node_name}} ({{node_ip}})" }],
       "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 }
     },
 
-    {
-      "type": "timeseries",
-      "title": "Consensus Traffic",
+    { "type": "timeseries", "title": "Consensus Traffic",
       "targets": [
-        {
-          "expr": "rate(proxy_request_bytes_yb_consensus_ConsensusService_UpdateConsensus{node_name=~\"$node\"}[1m])",
-          "legendFormat": "{{node_name}} Req",
-          "datasource": "Prometheus"
-        },
-        {
-          "expr": "rate(proxy_response_bytes_yb_consensus_ConsensusService_UpdateConsensus{node_name=~\"$node\"}[1m])",
-          "legendFormat": "{{node_name}} Resp",
-          "datasource": "Prometheus"
-        }
+        { "expr": "rate(proxy_request_bytes_yb_consensus_ConsensusService_UpdateConsensus{node_name=~\"$node\"}[1m])", "legendFormat": "{{node_name}} Req" },
+        { "expr": "rate(proxy_response_bytes_yb_consensus_ConsensusService_UpdateConsensus{node_name=~\"$node\"}[1m])", "legendFormat": "{{node_name}} Resp" }
       ],
       "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 }
     },
 
-    {
-      "type": "timeseries",
-      "title": "RPC Queue Pressure",
-      "targets": [
-        {
-          "expr": "sum by(node_name) (rpcs_in_queue_yb_consensus_ConsensusService{node_name=~\"$node\"})",
-          "legendFormat": "{{node_name}}",
-          "datasource": "Prometheus"
-        }
-      ],
+    { "type": "timeseries", "title": "RPC Queue Pressure",
+      "targets": [{ "expr": "sum by(node_name) (rpcs_in_queue_yb_consensus_ConsensusService{node_name=~\"$node\"})", "legendFormat": "{{node_name}}" }],
       "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 }
     },
 
-    {
-      "type": "timeseries",
-      "title": "YSQL TPS",
-      "targets": [
-        {
-          "expr": "sum(rate(handler_latency_yb_tserver_PgClientService_Perform_count{node_name=~\"$node\"}[1m]))",
-          "legendFormat": "TPS",
-          "datasource": "Prometheus"
-        }
-      ],
+    { "type": "timeseries", "title": "YSQL TPS",
+      "targets": [{ "expr": "sum(rate(handler_latency_yb_tserver_PgClientService_Perform_count{node_name=~\"$node\"}[1m]))", "legendFormat": "TPS" }],
       "gridPos": { "x": 0, "y": 20, "w": 8, "h": 6 }
     },
 
-    {
-      "type": "timeseries",
-      "title": "YSQL Avg Latency",
-      "targets": [
-        {
-          "expr": "rate(handler_latency_yb_tserver_PgClientService_Perform_sum{node_name=~\"$node\"}[1m]) / rate(handler_latency_yb_tserver_PgClientService_Perform_count{node_name=~\"$node\"}[1m])",
-          "legendFormat": "Latency",
-          "datasource": "Prometheus"
-        }
-      ],
+    { "type": "timeseries", "title": "YSQL Avg Latency",
+      "targets": [{ "expr": "rate(handler_latency_yb_tserver_PgClientService_Perform_sum{node_name=~\"$node\"}[1m]) / rate(handler_latency_yb_tserver_PgClientService_Perform_count{node_name=~\"$node\"}[1m])", "legendFormat": "Latency" }],
       "gridPos": { "x": 8, "y": 20, "w": 8, "h": 6 }
     },
 
-    {
-      "type": "timeseries",
-      "title": "YSQL RPC Queue",
-      "targets": [
-        {
-          "expr": "sum by(node_name) (rpcs_in_queue_yb_tserver_PgClientService{node_name=~\"$node\"})",
-          "legendFormat": "{{node_name}}",
-          "datasource": "Prometheus"
-        }
-      ],
+    { "type": "timeseries", "title": "YSQL RPC Queue",
+      "targets": [{ "expr": "sum by(node_name) (rpcs_in_queue_yb_tserver_PgClientService{node_name=~\"$node\"})", "legendFormat": "{{node_name}}" }],
       "gridPos": { "x": 16, "y": 20, "w": 8, "h": 6 }
     },
 
-    {
-      "type": "timeseries",
-      "title": "YCQL TPS",
+    { "type": "timeseries", "title": "YCQL TPS",
       "targets": [
-        {
-          "expr": "sum(rate(handler_latency_yb_tserver_TabletServerService_Write_count{node_name=~\"$node\"}[1m]))",
-          "legendFormat": "Writes",
-          "datasource": "Prometheus"
-        },
-        {
-          "expr": "sum(rate(handler_latency_yb_tserver_TabletServerService_Read_count{node_name=~\"$node\"}[1m]))",
-          "legendFormat": "Reads",
-          "datasource": "Prometheus"
-        }
+        { "expr": "sum(rate(handler_latency_yb_tserver_TabletServerService_Write_count{node_name=~\"$node\"}[1m]))", "legendFormat": "Writes" },
+        { "expr": "sum(rate(handler_latency_yb_tserver_TabletServerService_Read_count{node_name=~\"$node\"}[1m]))", "legendFormat": "Reads" }
       ],
       "gridPos": { "x": 0, "y": 26, "w": 12, "h": 6 }
     },
 
-    {
-      "type": "timeseries",
-      "title": "Disk Usage",
-      "targets": [
-        {
-          "expr": "sum by(node_name) (rocksdb_current_version_sst_files_size{node_name=~\"$node\"})",
-          "legendFormat": "{{node_name}}",
-          "datasource": "Prometheus"
-        }
-      ],
+    { "type": "timeseries", "title": "Disk Usage",
+      "targets": [{ "expr": "sum by(node_name) (rocksdb_current_version_sst_files_size{node_name=~\"$node\"})", "legendFormat": "{{node_name}}" }],
       "gridPos": { "x": 12, "y": 26, "w": 12, "h": 6 }
     },
 
-    {
-      "type": "timeseries",
-      "title": "Compaction Load",
+    { "type": "timeseries", "title": "Compaction Load",
       "targets": [
-        {
-          "expr": "rate(rocksdb_compact_read_bytes{node_name=~\"$node\"}[1m])",
-          "legendFormat": "Read",
-          "datasource": "Prometheus"
-        },
-        {
-          "expr": "rate(rocksdb_compact_write_bytes{node_name=~\"$node\"}[1m])",
-          "legendFormat": "Write",
-          "datasource": "Prometheus"
-        }
+        { "expr": "rate(rocksdb_compact_read_bytes{node_name=~\"$node\"}[1m])", "legendFormat": "Read" },
+        { "expr": "rate(rocksdb_compact_write_bytes{node_name=~\"$node\"}[1m])", "legendFormat": "Write" }
       ],
       "gridPos": { "x": 0, "y": 32, "w": 12, "h": 6 }
     },
 
-    {
-      "type": "timeseries",
-      "title": "CPU Usage",
-      "targets": [
-        {
-          "expr": "rate(process_cpu_seconds_total{node_name=~\"$node\"}[1m])",
-          "legendFormat": "{{node_name}} ({{node_ip}})",
-          "datasource": "Prometheus"
-        }
-      ],
+    { "type": "timeseries", "title": "CPU Usage",
+      "targets": [{ "expr": "rate(process_cpu_seconds_total{node_name=~\"$node\"}[1m])", "legendFormat": "{{node_name}} ({{node_ip}})" }],
       "gridPos": { "x": 12, "y": 32, "w": 12, "h": 6 }
     },
+
     {
-  "type": "bargauge",
-  "title": "🔥 INSERT per Node (Total)",
-  "targets": [
-    {
-      "expr": "sum by (node) (label_replace(handler_latency_yb_ysqlserver_SQLProcessor_InsertStmt_count, \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
-      "legendFormat": "{{node}}",
-      "datasource": "Prometheus"
-    }
-  ],
-  "gridPos": { "x": 0, "y": 38, "w": 8, "h": 6 },
-  "options": {
-    "orientation": "horizontal",
-    "displayMode": "gradient",
-    "reduceOptions": {
-      "calcs": ["lastNotNull"],
-      "fields": "",
-      "values": false
-    }
-  },
-  "fieldConfig": {
-    "defaults": {
-      "unit": "none",
-      "thresholds": {
-        "mode": "absolute",
-        "steps": [
-          { "color": "green", "value": null },
-          { "color": "yellow", "value": 1000 },
-          { "color": "red", "value": 3000 }
-        ]
-      }
-    }
-  }
-},
-{
-  "type": "bargauge",
-  "title": "🔥 INSERT per Node (Total)",
-  "targets": [
-    {
-      "expr": "sum by (node) (label_replace(handler_latency_yb_ysqlserver_SQLProcessor_InsertStmt_count, \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
-      "legendFormat": "{{node}}",
-      "datasource": "Prometheus"
-    }
-  ],
-  "gridPos": { "x": 0, "y": 38, "w": 8, "h": 6 },
-  "options": {
-    "orientation": "horizontal",
-    "displayMode": "gradient",
-    "reduceOptions": {
-      "calcs": ["lastNotNull"],
-      "fields": "",
-      "values": false
-    }
-  },
-  "fieldConfig": {
-    "defaults": {
-      "unit": "none",
-      "thresholds": {
-        "mode": "absolute",
-        "steps": [
-          { "color": "green", "value": null },
-          { "color": "yellow", "value": 1000 },
-          { "color": "red", "value": 3000 }
-        ]
-      }
-    }
-  }
-},
-{
-  "type": "bargauge",
-  "title": "🔥 TPS per Node",
-  "targets": [
-    {
-      "expr": "sum by (node) (label_replace(rate(handler_latency_yb_ysqlserver_SQLProcessor_Transactions_count[5m]), \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
-      "legendFormat": "{{node}}",
-      "datasource": "Prometheus"
-    }
-  ],
-  "gridPos": { "x": 16, "y": 38, "w": 8, "h": 6 },
-  "options": {
-    "orientation": "horizontal",
-    "displayMode": "gradient",
-    "reduceOptions": {
-      "calcs": ["lastNotNull"],
-      "fields": "",
-      "values": false
-    }
-  },
-  "fieldConfig": {
-    "defaults": {
-      "unit": "ops",
-      "thresholds": {
-        "mode": "absolute",
-        "steps": [
-          { "color": "green", "value": null },
-          { "color": "yellow", "value": 10 },
-          { "color": "red", "value": 50 }
-        ]
-      }
-    }
-  }
-},
-{
-  "type": "timeseries",
-  "title": "🔥 DB Traffic per Node (Combined)",
-  "targets": [
-    {
-      "expr": "sum by (node) (label_replace(handler_latency_yb_ysqlserver_SQLProcessor_InsertStmt_count, \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
-      "legendFormat": "INSERT - {{node}}"
+      "type": "bargauge",
+      "title": "🔥 INSERT per Node (Total)",
+      "targets": [
+        {
+          "expr": "sum by (node) (label_replace(handler_latency_yb_ysqlserver_SQLProcessor_InsertStmt_count, \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
+          "legendFormat": "{{node}}"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 38, "w": 8, "h": 6 }
     },
+
     {
-      "expr": "sum by (node) (label_replace(handler_latency_yb_ysqlserver_SQLProcessor_SelectStmt_count, \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
-      "legendFormat": "SELECT - {{node}}"
+      "type": "bargauge",
+      "title": "🔥 SELECT per Node (Total)",
+      "targets": [
+        {
+          "expr": "sum by (node) (label_replace(handler_latency_yb_ysqlserver_SQLProcessor_SelectStmt_count, \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
+          "legendFormat": "{{node}}"
+        }
+      ],
+      "gridPos": { "x": 8, "y": 38, "w": 8, "h": 6 }
     },
+
     {
-      "expr": "sum by (node) (label_replace(rate(handler_latency_yb_ysqlserver_SQLProcessor_Transactions_count[5m]), \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
-      "legendFormat": "TPS - {{node}}"
+      "type": "bargauge",
+      "title": "🔥 TPS per Node",
+      "targets": [
+        {
+          "expr": "sum by (node) (label_replace(rate(handler_latency_yb_ysqlserver_SQLProcessor_Transactions_count[5m]), \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
+          "legendFormat": "{{node}}"
+        }
+      ],
+      "gridPos": { "x": 16, "y": 38, "w": 8, "h": 6 }
     }
-  ],
-  "options": {
-    "legend": {
-      "displayMode": "list",
-      "placement": "bottom"
-    }
-  },
-  "fieldConfig": {
-    "defaults": {
-      "unit": "short"
-    }
-  },
-  "gridPos": { "x": 0, "y": 45, "w": 24, "h": 8 }
-},
-{
-  "type": "stat",
-  "title": "🔥 HOT NODE (Most Inserts)",
-  "targets": [
-    {
-      "expr": "topk(1, sum by (node) (label_replace(handler_latency_yb_ysqlserver_SQLProcessor_InsertStmt_count, \"node\", \"$1\", \"instance\", \"(.*):.*\")))",
-      "legendFormat": "{{node}}"
-    }
-  ],
-  "options": {
-    "reduceOptions": {
-      "calcs": ["lastNotNull"]
-    }
-  },
-  "fieldConfig": {
-    "defaults": {
-      "thresholds": {
-        "steps": [
-          { "color": "green", "value": null },
-          { "color": "red", "value": 3000 }
-        ]
-      }
-    }
-  },
-  "gridPos": { "x": 0, "y": 54, "w": 6, "h": 4 }
-}
 
   ]
 }
