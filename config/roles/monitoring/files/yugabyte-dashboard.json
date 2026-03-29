@@ -171,24 +171,39 @@
     "options": {}
   },
   {
+    "id": "reduce",
+    "options": {
+      "reducers": ["lastNotNull"],
+      "fields": ""
+    }
+  },
+  {
     "id": "joinByField",
     "options": {
       "byField": "instance"
     }
   },
-  {
-    "id": "organize",
-    "options": {
-      "renameByName": {
-        "instance": "Node",
-        "Value #A": "Status",
-        "Value #B": "RAM",
-        "Value #C": "SST Size",
-        "Value #D": "Read OPS",
-        "Value #E": "Write OPS"
-      }
+{
+  "id": "organize",
+  "options": {
+    "renameByName": {
+      "instance": "Node",
+      "Value #A": "Status",
+      "Value #B": "RAM",
+      "Value #C": "SST Size",
+      "Value #D": "Read OPS",
+      "Value #E": "Write OPS"
+    },
+    "indexByName": {
+      "Node": 0,
+      "Status": 1,
+      "RAM": 2,
+      "SST Size": 3,
+      "Read OPS": 4,
+      "Write OPS": 5
     }
   }
+}
 ],
 "fieldConfig": {
 "overrides": [
