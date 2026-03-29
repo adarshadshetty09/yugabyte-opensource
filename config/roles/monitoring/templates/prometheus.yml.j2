@@ -97,3 +97,27 @@ scrape_configs:
 {% for host in groups['nodes'] %}
           - "{{ hostvars[host].ansible_host }}:9187"
 {% endfor %}
+
+
+  # =============================
+  # Yugabyte YSQL (Web UI Metrics)
+  # =============================
+  - job_name: "yugabyte-ysql"
+    metrics_path: /prometheus-metrics
+    static_configs:
+      - targets:
+{% for host in groups['nodes'] %}
+          - "{{ hostvars[host].ansible_host }}:13000"
+{% endfor %}
+
+
+  # =============================
+  # Yugabyte YCQL (Web UI Metrics)
+  # =============================
+  - job_name: "yugabyte-ycql"
+    metrics_path: /prometheus-metrics
+    static_configs:
+      - targets:
+{% for host in groups['nodes'] %}
+          - "{{ hostvars[host].ansible_host }}:12000"
+{% endfor %}
