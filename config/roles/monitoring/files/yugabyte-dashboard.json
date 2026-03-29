@@ -392,6 +392,140 @@
       "refId": "A"
     }
   ]
+},
+{
+  "type": "table",
+  "title": "🔁 Replication Health",
+  "datasource": "Prometheus",
+
+  "targets": [
+    {
+      "expr": "pg_replication_lag_seconds",
+      "refId": "A"
+    },
+    {
+      "expr": "pg_replication_is_replica",
+      "refId": "B"
+    }
+  ],
+
+  "transformations": [
+    {
+      "id": "reduce",
+      "options": { "reducers": ["lastNotNull"] }
+    },
+    {
+      "id": "organize",
+      "options": {
+        "renameByName": {
+          "Value #A": "Replication Lag (sec)",
+          "Value #B": "Replica Status"
+        }
+      }
+    }
+  ],
+
+  "fieldConfig": {
+    "overrides": [
+      {
+        "matcher": { "id": "byName", "options": "Replica Status" },
+        "properties": [
+          {
+            "id": "mappings",
+            "value": [
+              {
+                "type": "value",
+                "options": {
+                  "1": { "text": "🟢 Replica", "color": "green" },
+                  "0": { "text": "🔴 Primary", "color": "blue" }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  "options": { "showHeader": true },
+  "gridPos": { "x": 0, "y": 26, "w": 24, "h": 6 }
+},
+{
+  "type": "table",
+  "title": "🧠 Cluster Info (RF / Encryption / Health)",
+  "datasource": "Prometheus",
+
+  "targets": [
+    {
+      "expr": "yb_cluster_replication_factor",
+      "refId": "A"
+    },
+    {
+      "expr": "yb_encryption_enabled",
+      "refId": "B"
+    },
+    {
+      "expr": "sum(up{job=\"yugabyte-masters\"})",
+      "refId": "C"
+    },
+    {
+      "expr": "sum(up{job=\"yugabyte-tservers\"})",
+      "refId": "D"
+    }
+  ],
+
+  "transformations": [
+    {
+      "id": "reduce",
+      "options": {
+        "reducers": ["lastNotNull"]
+      }
+    },
+    {
+      "id": "organize",
+      "options": {
+        "renameByName": {
+          "Value #A": "Replication Factor",
+          "Value #B": "Encryption",
+          "Value #C": "Masters UP",
+          "Value #D": "TServers UP"
+        }
+      }
+    }
+  ],
+
+  "fieldConfig": {
+    "overrides": [
+      {
+        "matcher": { "id": "byName", "options": "Encryption" },
+        "properties": [
+          {
+            "id": "mappings",
+            "value": [
+              {
+                "type": "value",
+                "options": {
+                  "1": { "text": "🔒 Enabled", "color": "green" },
+                  "0": { "text": "🔓 Disabled", "color": "red" }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  "options": {
+    "showHeader": true
+  },
+
+  "gridPos": {
+    "x": 0,
+    "y": 25,
+    "w": 24,
+    "h": 6
+  }
 }
 ]
 }
