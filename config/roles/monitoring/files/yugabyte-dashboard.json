@@ -166,25 +166,29 @@
 }
 ],
 "transformations": [
-{
-"id": "joinByField",
-"options": {
-"byField": "instance"
-}
-},
-{
-"id": "organize",
-"options": {
-"renameByName": {
-"instance": "Node",
-"Value #A": "Status",
-"Value #B": "RAM",
-"Value #C": "SST Size",
-"Value #D": "Read OPS",
-"Value #E": "Write OPS"
-}
-}
-}
+  {
+    "id": "labelsToFields",
+    "options": {}
+  },
+  {
+    "id": "joinByField",
+    "options": {
+      "byField": "instance"
+    }
+  },
+  {
+    "id": "organize",
+    "options": {
+      "renameByName": {
+        "instance": "Node",
+        "Value #A": "Status",
+        "Value #B": "RAM",
+        "Value #C": "SST Size",
+        "Value #D": "Read OPS",
+        "Value #E": "Write OPS"
+      }
+    }
+  }
 ],
 "fieldConfig": {
 "overrides": [
