@@ -1,5 +1,5 @@
 - name: Setup YBC in Yugabyte
-  hosts: dbs
+  hosts: all
   become: yes
   become_user: yugabyte
 
@@ -8,27 +8,41 @@
     ybc_tar: ybc-2.0.0.0-b19-linux-x86_64.tar.gz
     ybc_src: "{{ yb_home }}/share/{{ ybc_tar }}"
     ybc_extract_dir: "{{ yb_home }}/share/ybc-2.0.0.0-b19-linux-x86_64"
+    ybc_temp_dir: "{{ yb_home }}/share/ybc"
     ybc_final_dir: "{{ yb_home }}/ybc"
 
   tasks:
+
+    - name: Check if YBC already installed
+      stat:
+        path: "{{ ybc_final_dir }}"
+      register: ybc_installed
 
     - name: Extract YBC tar file
       unarchive:
         src: "{{ ybc_src }}"
         dest: "{{ yb_home }}/share/"
         remote_src: yes
+      when: not ybc_installed.stat.exists
+
+    - name: Rename extracted folder to ybc
+      command: mv "{{ ybc_extract_dir }}" "{{ ybc_temp_dir }}"
+      args:
+        removes: "{{ ybc_extract_dir }}"
+      when: not ybc_installed.stat.exists
+
+    - name: Move ybc to Yugabyte home
+      command: mv "{{ ybc_temp_dir }}" "{{ ybc_final_dir }}"
+      args:
+        creates: "{{ ybc_final_dir }}"
+      when: not ybc_installed.stat.exists
 
     - name: Remove tar file (cleanup)
       file:
         path: "{{ ybc_src }}"
         state: absent
+      when: not ybc_installed.stat.exists
 
-    - name: Rename extracted folder to ybc
-      command: mv "{{ ybc_extract_dir }}" "{{ yb_home }}/share/ybc"
-      args:
-        creates: "{{ yb_home }}/share/ybc"
-
-    - name: Move ybc folder to Yugabyte home
-      command: mv "{{ yb_home }}/share/ybc" "{{ yb_final_dir }}"
-      args:
-        creates: "{{ yb_final_dir }}"
+    - name: Run YBC post install
+      command: "{{ ybc_final_dir }}/bin/post_install.sh"
+      when: not ybc_installed.stat.exists
