@@ -1,0 +1,34 @@
+- name: Setup YBC in Yugabyte
+  hosts: dbs
+  become: yes
+  become_user: yugabyte
+
+  vars:
+    yb_home: /home/yugabyte/yugabyte-2024.2.8.0
+    ybc_tar: ybc-2.0.0.0-b19-linux-x86_64.tar.gz
+    ybc_src: "{{ yb_home }}/share/{{ ybc_tar }}"
+    ybc_extract_dir: "{{ yb_home }}/share/ybc-2.0.0.0-b19-linux-x86_64"
+    ybc_final_dir: "{{ yb_home }}/ybc"
+
+  tasks:
+
+    - name: Extract YBC tar file
+      unarchive:
+        src: "{{ ybc_src }}"
+        dest: "{{ yb_home }}/share/"
+        remote_src: yes
+
+    - name: Remove tar file (cleanup)
+      file:
+        path: "{{ ybc_src }}"
+        state: absent
+
+    - name: Rename extracted folder to ybc
+      command: mv "{{ ybc_extract_dir }}" "{{ yb_home }}/share/ybc"
+      args:
+        creates: "{{ yb_home }}/share/ybc"
+
+    - name: Move ybc folder to Yugabyte home
+      command: mv "{{ yb_home }}/share/ybc" "{{ yb_final_dir }}"
+      args:
+        creates: "{{ yb_final_dir }}"
