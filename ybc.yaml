@@ -1,5 +1,5 @@
 - name: Setup YBC in Yugabyte
-  hosts: all
+  hosts: db_nodes     
   become: yes
   become_user: yugabyte
 
@@ -13,36 +13,32 @@
 
   tasks:
 
-    - name: Check if YBC already installed
+    - name: Check if YBC exists
       stat:
         path: "{{ ybc_final_dir }}"
       register: ybc_installed
 
-    - name: Extract YBC tar file
+    - name: Extract YBC
       unarchive:
         src: "{{ ybc_src }}"
         dest: "{{ yb_home }}/share/"
         remote_src: yes
       when: not ybc_installed.stat.exists
 
-    - name: Rename extracted folder to ybc
+    - name: Rename folder
       command: mv "{{ ybc_extract_dir }}" "{{ ybc_temp_dir }}"
-      args:
-        removes: "{{ ybc_extract_dir }}"
       when: not ybc_installed.stat.exists
 
-    - name: Move ybc to Yugabyte home
+    - name: Move to final location
       command: mv "{{ ybc_temp_dir }}" "{{ ybc_final_dir }}"
-      args:
-        creates: "{{ ybc_final_dir }}"
       when: not ybc_installed.stat.exists
 
-    - name: Remove tar file (cleanup)
+    - name: Cleanup tar file
       file:
         path: "{{ ybc_src }}"
         state: absent
       when: not ybc_installed.stat.exists
 
-    - name: Run YBC post install
+    - name: Run post install
       command: "{{ ybc_final_dir }}/bin/post_install.sh"
       when: not ybc_installed.stat.exists
