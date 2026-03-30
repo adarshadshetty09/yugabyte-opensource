@@ -73,5 +73,7 @@
 
     # ⚙️ Post install
     - name: Run post install
-      command: "{{ ybc_final_dir }}/bin/post_install.sh"
+      command: >
+          {{ ybc_final_dir }}/bin/post_install.sh
+          --yugabytedb_dir {{ yb_home }}
       when: ybc_final_updated.stat.exists
