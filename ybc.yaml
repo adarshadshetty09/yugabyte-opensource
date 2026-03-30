@@ -1,5 +1,5 @@
-- name: Setup YBC in Yugabyte
-  hosts: db_nodes     
+- name: Setup YBC properly (idempotent)
+  hosts: db_nodes
   become: yes
   become_user: yugabyte
 
@@ -8,37 +8,60 @@
     ybc_tar: ybc-2.0.0.0-b19-linux-x86_64.tar.gz
     ybc_src: "{{ yb_home }}/share/{{ ybc_tar }}"
     ybc_extract_dir: "{{ yb_home }}/share/ybc-2.0.0.0-b19-linux-x86_64"
-    ybc_temp_dir: "{{ yb_home }}/share/ybc"
+    ybc_share_dir: "{{ yb_home }}/share/ybc"
     ybc_final_dir: "{{ yb_home }}/ybc"
 
   tasks:
 
-    - name: Check if YBC exists
+    # 🔍 Check states
+    - name: Check final YBC
       stat:
         path: "{{ ybc_final_dir }}"
-      register: ybc_installed
+      register: ybc_final
 
+    - name: Check share YBC
+      stat:
+        path: "{{ ybc_share_dir }}"
+      register: ybc_share
+
+    - name: Check extracted dir
+      stat:
+        path: "{{ ybc_extract_dir }}"
+      register: ybc_extracted
+
+    # 📦 Extract ONLY if tar exists and nothing extracted
     - name: Extract YBC
       unarchive:
         src: "{{ ybc_src }}"
         dest: "{{ yb_home }}/share/"
         remote_src: yes
-      when: not ybc_installed.stat.exists
+      when:
+        - not ybc_final.stat.exists
+        - not ybc_share.stat.exists
+        - not ybc_extracted.stat.exists
 
-    - name: Rename folder
-      command: mv "{{ ybc_extract_dir }}" "{{ ybc_temp_dir }}"
-      when: not ybc_installed.stat.exists
+    # 🔄 Rename extracted → ybc
+    - name: Rename extracted folder
+      command: mv "{{ ybc_extract_dir }}" "{{ ybc_share_dir }}"
+      when:
+        - ybc_extracted.stat.exists
+        - not ybc_share.stat.exists
 
-    - name: Move to final location
-      command: mv "{{ ybc_temp_dir }}" "{{ ybc_final_dir }}"
-      when: not ybc_installed.stat.exists
+    # 🚚 Move to final location (THIS WAS YOUR MISSING LOGIC)
+    - name: Move YBC to final location
+      command: mv "{{ ybc_share_dir }}" "{{ ybc_final_dir }}"
+      when:
+        - ybc_share.stat.exists
+        - not ybc_final.stat.exists
 
-    - name: Cleanup tar file
+    # 🧹 Cleanup tar (optional)
+    - name: Remove tar file
       file:
         path: "{{ ybc_src }}"
         state: absent
-      when: not ybc_installed.stat.exists
+      when: ybc_final.stat.exists
 
+    # ⚙️ Post install
     - name: Run post install
       command: "{{ ybc_final_dir }}/bin/post_install.sh"
-      when: not ybc_installed.stat.exists
+      when: ybc_final.stat.exists
