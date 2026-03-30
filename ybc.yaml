@@ -40,7 +40,7 @@
         - not ybc_share.stat.exists
         - not ybc_extracted.stat.exists
 
-    # 🔄 Rename extracted → share/ybc
+    # 🔄 Rename
     - name: Rename extracted folder
       command: mv "{{ ybc_extract_dir }}" "{{ ybc_share_dir }}"
       args:
@@ -49,7 +49,7 @@
         - ybc_extracted.stat.exists
         - not ybc_share.stat.exists
 
-    # 🚚 Move to final location
+    # 🚚 Move
     - name: Move YBC to final location
       command: mv "{{ ybc_share_dir }}" "{{ ybc_final_dir }}"
       args:
@@ -58,30 +58,31 @@
         - ybc_share.stat.exists
         - not ybc_final.stat.exists
 
-    # 🔄 Re-check AFTER move (IMPORTANT FIX)
+    # 🔄 Refresh
     - name: Refresh final YBC status
       stat:
         path: "{{ ybc_final_dir }}"
       register: ybc_final_updated
 
-    # 🧹 Cleanup tar
+    # 🧹 Cleanup
     - name: Remove tar file
       file:
         path: "{{ ybc_src }}"
         state: absent
       when: ybc_final_updated.stat.exists
 
-    # ⚙️ Post install
-- name: Check if YBC already initialized
-  stat:
-    path: "{{ ybc_final_dir }}/controller"
-  register: ybc_initialized
+    # 🔍 Check initialization
+    - name: Check if YBC already initialized
+      stat:
+        path: "{{ ybc_final_dir }}/controller"
+      register: ybc_initialized
 
-- name: Run post install
-  shell: >
-    {{ ybc_final_dir }}/bin/post_install.sh
-    --yugabytedb_dir {{ yb_home }}
-    --advertise_address {{ ansible_host }}
-  when:
-    - ybc_final_updated.stat.exists
-    - not ybc_initialized.stat.exists
+    # ⚙️ Post install
+    - name: Run post install
+      shell: >
+        {{ ybc_final_dir }}/bin/post_install.sh
+        --yugabytedb_dir {{ yb_home }}
+        --advertise_address {{ ansible_host }}
+      when:
+        - ybc_final_updated.stat.exists
+        - not ybc_initialized.stat.exists
