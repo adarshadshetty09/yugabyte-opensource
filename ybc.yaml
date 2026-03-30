@@ -72,9 +72,16 @@
       when: ybc_final_updated.stat.exists
 
     # ⚙️ Post install
-    - name: Run post install
-      shell: >
-        {{ ybc_final_dir }}/bin/post_install.sh
-        --yugabytedb_dir {{ yb_home }}
-        --advertise_address {{ ansible_host }}
-      when: ybc_final_updated.stat.exists
+- name: Check if YBC already initialized
+  stat:
+    path: "{{ ybc_final_dir }}/controller"
+  register: ybc_initialized
+
+- name: Run post install
+  shell: >
+    {{ ybc_final_dir }}/bin/post_install.sh
+    --yugabytedb_dir {{ yb_home }}
+    --advertise_address {{ ansible_host }}
+  when:
+    - ybc_final_updated.stat.exists
+    - not ybc_initialized.stat.exists
