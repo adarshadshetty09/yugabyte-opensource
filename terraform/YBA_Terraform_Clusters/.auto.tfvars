@@ -10,7 +10,7 @@ yugabyte_clusters_project1 = {
     enable_external_ip                 = false
     enable_shielded_vm                 = true
     machine_name                       = "ybdb"
-    instance_count                     = 5
+    instance_count                     = 3
     attached_disks_per_instance        = 1
     enable_yugabyte_disk               = false   ## boot disk
     enable_data1_disk                  = true
@@ -38,12 +38,10 @@ yugabyte_clusters_project1 = {
     internal_ip = [
   "10.0.0.10",
   "10.0.0.11",
-  "10.0.0.12",
-  "10.0.0.13",
-  "10.0.0.14"
+  "10.0.0.12"
 ]
     region                             = "northamerica-northeast1"
-    machine_type                       = "e2-small"
+    machine_type                       = "n2-standard-2"
     vm_deletion_protection             = false
     network_tags                       = ["yugabyte","allow-ssh"]
     network                            = "vpc-yugabyte-terraform-cluster"
