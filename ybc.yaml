@@ -13,7 +13,7 @@
 
   tasks:
 
-    # 🔍 Initial checks
+    #  Check current state
     - name: Check final YBC
       stat:
         path: "{{ ybc_final_dir }}"
@@ -29,18 +29,24 @@
         path: "{{ ybc_extract_dir }}"
       register: ybc_extracted
 
-    # 📦 Extract
+    - name: Check tar file exists
+      stat:
+        path: "{{ ybc_src }}"
+      register: ybc_tar_file
+
+    #  Extract only if needed
     - name: Extract YBC
       unarchive:
         src: "{{ ybc_src }}"
         dest: "{{ yb_home }}/share/"
         remote_src: yes
       when:
+        - ybc_tar_file.stat.exists
         - not ybc_final.stat.exists
         - not ybc_share.stat.exists
         - not ybc_extracted.stat.exists
 
-    # 🔄 Rename
+    #  Rename extracted folder → share/ybc
     - name: Rename extracted folder
       command: mv "{{ ybc_extract_dir }}" "{{ ybc_share_dir }}"
       args:
@@ -49,35 +55,38 @@
         - ybc_extracted.stat.exists
         - not ybc_share.stat.exists
 
-    # 🚚 Move
-    - name: Move YBC to final location
-      command: mv "{{ ybc_share_dir }}" "{{ ybc_final_dir }}"
+    #  Move to final location (SAFE + idempotent)
+    - name: Move YBC to final location (safe)
+      shell: |
+        if [ -d "{{ ybc_share_dir }}" ] && [ ! -d "{{ ybc_final_dir }}" ]; then
+          mv "{{ ybc_share_dir }}" "{{ ybc_final_dir }}"
+        fi
       args:
-        removes: "{{ ybc_share_dir }}"
+        creates: "{{ ybc_final_dir }}"
       when:
         - ybc_share.stat.exists
         - not ybc_final.stat.exists
 
-    # 🔄 Refresh
+    #  Refresh state after move
     - name: Refresh final YBC status
       stat:
         path: "{{ ybc_final_dir }}"
       register: ybc_final_updated
 
-    # 🧹 Cleanup
+    #  Cleanup tar file
     - name: Remove tar file
       file:
         path: "{{ ybc_src }}"
         state: absent
       when: ybc_final_updated.stat.exists
 
-    # 🔍 Check initialization
+    #  Check if already initialized
     - name: Check if YBC already initialized
       stat:
         path: "{{ ybc_final_dir }}/controller"
       register: ybc_initialized
 
-    # ⚙️ Post install
+    #  Run post install (ONLY once)
     - name: Run post install
       shell: >
         {{ ybc_final_dir }}/bin/post_install.sh
