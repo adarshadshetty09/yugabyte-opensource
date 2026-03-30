@@ -1,4 +1,4 @@
-- name: Setup YBC properly (idempotent)
+- name: Setup YBC properly (fully idempotent)
   hosts: db_nodes
   become: yes
   become_user: yugabyte
@@ -13,7 +13,7 @@
 
   tasks:
 
-    # 🔍 Check states
+    # 🔍 Initial checks
     - name: Check final YBC
       stat:
         path: "{{ ybc_final_dir }}"
@@ -29,7 +29,7 @@
         path: "{{ ybc_extract_dir }}"
       register: ybc_extracted
 
-    # 📦 Extract ONLY if tar exists and nothing extracted
+    # 📦 Extract
     - name: Extract YBC
       unarchive:
         src: "{{ ybc_src }}"
@@ -40,28 +40,38 @@
         - not ybc_share.stat.exists
         - not ybc_extracted.stat.exists
 
-    # 🔄 Rename extracted → ybc
+    # 🔄 Rename extracted → share/ybc
     - name: Rename extracted folder
       command: mv "{{ ybc_extract_dir }}" "{{ ybc_share_dir }}"
+      args:
+        removes: "{{ ybc_extract_dir }}"
       when:
         - ybc_extracted.stat.exists
         - not ybc_share.stat.exists
 
-    # 🚚 Move to final location (THIS WAS YOUR MISSING LOGIC)
+    # 🚚 Move to final location
     - name: Move YBC to final location
       command: mv "{{ ybc_share_dir }}" "{{ ybc_final_dir }}"
+      args:
+        removes: "{{ ybc_share_dir }}"
       when:
         - ybc_share.stat.exists
         - not ybc_final.stat.exists
 
-    # 🧹 Cleanup tar (optional)
+    # 🔄 Re-check AFTER move (IMPORTANT FIX)
+    - name: Refresh final YBC status
+      stat:
+        path: "{{ ybc_final_dir }}"
+      register: ybc_final_updated
+
+    # 🧹 Cleanup tar
     - name: Remove tar file
       file:
         path: "{{ ybc_src }}"
         state: absent
-      when: ybc_final.stat.exists
+      when: ybc_final_updated.stat.exists
 
     # ⚙️ Post install
     - name: Run post install
       command: "{{ ybc_final_dir }}/bin/post_install.sh"
-      when: ybc_final.stat.exists
+      when: ybc_final_updated.stat.exists
