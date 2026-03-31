@@ -1,4 +1,4 @@
-- name: Deploy TLS certs to DB nodes
+- name: Deploy TLS certs to DB nodes (keep original filenames)
   hosts: db_nodes
   become: yes
 
@@ -20,22 +20,22 @@
       copy:
         src: "{{ base_dir }}/secure-data/ca.crt"
         dest: "{{ cert_dir }}/ca.crt"
-        owner: yugabyte         
-        group: yugabyte          
+        owner: yugabyte
+        group: yugabyte
         mode: '0644'
 
-    - name: Copy node cert
+    - name: Copy node cert (NO RENAME)
       copy:
         src: "{{ base_dir }}/{{ ansible_host }}/node.{{ ansible_host }}.crt"
-        dest: "{{ cert_dir }}/node.crt"
-        owner: yugabyte          
-        group: yugabyte          
+        dest: "{{ cert_dir }}/node.{{ ansible_host }}.crt"
+        owner: yugabyte
+        group: yugabyte
         mode: '0644'
 
-    - name: Copy node key
+    - name: Copy node key (NO RENAME)
       copy:
         src: "{{ base_dir }}/{{ ansible_host }}/node.{{ ansible_host }}.key"
-        dest: "{{ cert_dir }}/node.key"
-        owner: yugabyte          
-        group: yugabyte          
+        dest: "{{ cert_dir }}/node.{{ ansible_host }}.key"
+        owner: yugabyte
+        group: yugabyte
         mode: '0400'
