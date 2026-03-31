@@ -6,6 +6,7 @@
   vars:
     base_dir: "/home/ansible"
     nodes: "{{ groups['yugabyte_nodes'] }}"
+    cert_dir: "/home/yugabyte/certs"
 
   tasks:
 
@@ -154,3 +155,38 @@
       debug:
         msg: "{{ item.stdout }}"
       loop: "{{ verify_output.results }}"
+
+
+
+#### Copy Certs to the DB  nodes
+    - name: Create cert directory
+      file:
+        path: "{{ cert_dir }}"
+        state: directory
+        owner: yugabyte
+        group: yugabyte
+        mode: '0755'
+
+    - name: Copy CA certificate
+      copy:
+        src: "{{ base_dir }}/secure-data/ca.crt"
+        dest: "{{ cert_dir }}/ca.crt"
+        owner: yugabyte
+        group: yugabyte
+        mode: '0644'
+
+    - name: Copy node certificate (rename)
+      copy:
+        src: "{{ base_dir }}/{{ ansible_host }}/node.{{ ansible_host }}.crt"
+        dest: "{{ cert_dir }}/node.crt"
+        owner: yugabyte
+        group: yugabyte
+        mode: '0644'
+
+    - name: Copy node key (rename)
+      copy:
+        src: "{{ base_dir }}/{{ ansible_host }}/node.{{ ansible_host }}.key"
+        dest: "{{ cert_dir }}/node.key"
+        owner: yugabyte
+        group: yugabyte
+        mode: '0400'
