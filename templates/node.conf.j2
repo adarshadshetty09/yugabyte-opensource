@@ -1,15 +1,15 @@
 [ req ]
-prompt = no
+prompt=no
 distinguished_name = my_distinguished_name
 
 [ my_distinguished_name ]
 organizationName = Yugabyte
-commonName = {{ ansible_host }}
+commonName = {{ node_ip }}
 
-[ req_ext ]
+[ req_ext]
 subjectAltName = @alt_names
 
-[ alt_names ]
+[alt_names]
 {% for host in groups['yugabyte_nodes'] %}
 IP.{{ loop.index }} = {{ hostvars[host].ansible_host }}
 {% endfor %}

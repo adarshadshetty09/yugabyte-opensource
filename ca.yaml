@@ -89,6 +89,55 @@
       args:
         creates: "{{ base_dir }}/secure-data/ca.crt"
 
-    - name: Verify the Generated CA Certs 
+    - name: Verify the Generated CA Certs
       command: >
-         openssl x509 -in {{ base_dir }}/secure-data/ca.crt -text -noout
+        openssl x509 -in {{ base_dir }}/secure-data/ca.crt -text -noout
+
+    - name: Copy CA cert to node directories
+      copy:
+        src: "{{ base_dir }}/secure-data/ca.crt"
+        dest: "{{ base_dir }}/{{ hostvars[item].ansible_host }}/ca.crt"
+      loop: "{{ nodes }}"
+
+    - name: Generate node config
+      template:
+        src: templates/node.conf.j2
+        dest: "{{ base_dir }}/{{ hostvars[item].ansible_host }}/node.conf"
+      loop: "{{ nodes }}"
+      vars:
+        node_ip: "{{ hostvars[item].ansible_host }}"
+
+    - name: Generate node key
+      command: >
+        openssl genrsa -out
+        {{ base_dir }}/{{ hostvars[item].ansible_host }}/node.{{ hostvars[item].ansible_host }}.key 2048
+      args:
+        creates: "{{ base_dir }}/{{ hostvars[item].ansible_host }}/node.{{ hostvars[item].ansible_host }}.key"
+      loop: "{{ nodes }}"
+
+    - name: Generate CSR
+      command: >
+        openssl req -new
+        -config {{ base_dir }}/{{ hostvars[item].ansible_host }}/node.conf
+        -key {{ base_dir }}/{{ hostvars[item].ansible_host }}/node.{{ hostvars[item].ansible_host }}.key
+        -out {{ base_dir }}/{{ hostvars[item].ansible_host }}/node.csr
+      args:
+        creates: "{{ base_dir }}/{{ hostvars[item].ansible_host }}/node.csr"
+      loop: "{{ nodes }}"
+
+    - name: Sign node certificate
+      command: >
+        openssl ca
+        -config {{ base_dir }}/secure-data/ca.conf
+        -keyfile {{ base_dir }}/secure-data/ca.key
+        -cert {{ base_dir }}/secure-data/ca.crt
+        -policy my_policy
+        -out {{ base_dir }}/{{ hostvars[item].ansible_host }}/node.{{ hostvars[item].ansible_host }}.crt
+        -in {{ base_dir }}/{{ hostvars[item].ansible_host }}/node.csr
+        -days 3650
+        -batch
+        -extfile {{ base_dir }}/{{ hostvars[item].ansible_host }}/node.conf
+        -extensions req_ext
+      args:
+        creates: "{{ base_dir }}/{{ hostvars[item].ansible_host }}/node.{{ hostvars[item].ansible_host }}.crt"
+      loop: "{{ nodes }}"
