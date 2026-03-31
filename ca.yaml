@@ -78,3 +78,17 @@
       file:
         path: "{{ base_dir }}/secure-data/ca.key"
         mode: '0400'
+
+    - name: Generate CA certificate
+      command: >
+        openssl req -new -x509
+        -days 3650
+        -config {{ base_dir }}/secure-data/ca.conf
+        -key {{ base_dir }}/secure-data/ca.key
+        -out {{ base_dir }}/secure-data/ca.crt
+      args:
+        creates: "{{ base_dir }}/secure-data/ca.crt"
+
+    - name: Verify the Generated CA Certs 
+      command: >
+        openssl x509 -in secure-data/ca.crt -text -noout
