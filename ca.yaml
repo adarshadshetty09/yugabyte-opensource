@@ -141,3 +141,16 @@
       args:
         creates: "{{ base_dir }}/{{ hostvars[item].ansible_host }}/node.{{ hostvars[item].ansible_host }}.crt"
       loop: "{{ nodes }}"
+
+    - name: Verify node certificates
+      command: >
+        openssl verify
+        -CAfile {{ base_dir }}/secure-data/ca.crt
+        {{ base_dir }}/{{ hostvars[item].ansible_host }}/node.{{ hostvars[item].ansible_host }}.crt
+      register: verify_output
+      loop: "{{ nodes }}"
+
+    - name: Show verification result
+      debug:
+        msg: "{{ item.stdout }}"
+      loop: "{{ verify_output.results }}"
