@@ -1,3 +1,7 @@
+---
+# =========================
+# PLAY 1: Generate Certs
+# =========================
 - name: Yugabyte TLS - Generate Certificates
   hosts: localhost
   gather_facts: no
@@ -39,3 +43,65 @@
       loop: "{{ nodes }}"
       loop_control:
         loop_var: node
+
+
+# =========================
+# PLAY 2: Copy Certs
+# =========================
+- name: Yugabyte TLS - Copy Certificates
+  hosts: yugabyte_nodes
+  become: yes
+
+  vars:
+    cert_dir: /home/yugabyte/certs
+    base_dir: "/home/ansible/certs"
+
+  tasks:
+
+    - name: Create cert dir
+      file:
+        path: "{{ cert_dir }}"
+        state: directory
+        owner: yugabyte
+        group: yugabyte
+
+    - name: Copy CA cert
+      copy:
+        src: "{{ base_dir }}/ca/ca.crt"
+        dest: "{{ cert_dir }}/ca.crt"
+
+    - name: Copy node cert
+      copy:
+        src: "{{ base_dir }}/nodes/{{ ansible_host }}/node.{{ ansible_host }}.crt"
+        dest: "{{ cert_dir }}/node.crt"
+
+    - name: Copy node key
+      copy:
+        src: "{{ base_dir }}/nodes/{{ ansible_host }}/node.{{ ansible_host }}.key"
+        dest: "{{ cert_dir }}/node.key"
+        mode: '0400'
+
+
+# =========================
+# PLAY 3: Restart Yugabyte
+# =========================
+- name: Yugabyte TLS - Restart Services
+  hosts: yugabyte_nodes
+  become: yes
+
+  tasks:
+
+    - name: Stop Yugabyte
+      shell: ./bin/yugabyted stop
+      args:
+        chdir: /home/yugabyte/yugabyte-2024.2.8.0
+      ignore_errors: yes
+
+    - name: Start Yugabyte with TLS
+      shell: >
+        ./bin/yugabyted start
+        --base_dir=/home/yugabyte/data
+        --certs_dir=/home/yugabyte/certs
+        --secure
+      args:
+        chdir: /home/yugabyte/yugabyte-2024.2.8.0
