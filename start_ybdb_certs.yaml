@@ -1,0 +1,30 @@
+- name: Rolling Restart Yugabyte with TLS
+  hosts: yugabyte_nodes
+  become: yes
+  become_user: yugabyte
+  serial: 1   
+
+  tasks:
+
+    - name: Stop Yugabyte
+      shell: ./bin/yugabyted stop
+      args:
+        chdir: /home/yugabyte/yugabyte-2024.2.8.0
+      ignore_errors: yes
+
+    - name: Wait before starting (optional safety)
+      pause:
+        seconds: 5
+
+    - name: Start Yugabyte with TLS
+      shell: >
+        ./bin/yugabyted start
+        --base_dir=/home/yugabyte/data
+        --certs_dir=/home/yugabyte/certs
+        --secure
+      args:
+        chdir: /home/yugabyte/yugabyte-2024.2.8.0
+
+    - name: Wait for service to stabilize
+      pause:
+        seconds: 10

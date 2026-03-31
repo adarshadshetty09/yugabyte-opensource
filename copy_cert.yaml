@@ -1,0 +1,33 @@
+- name: Deploy TLS certs to DB nodes
+  hosts: db_nodes
+  become: yes
+
+  vars:
+    base_dir: "/home/ansible"
+    cert_dir: "/home/yugabyte/certs"
+
+  tasks:
+
+    - name: Create cert directory
+      file:
+        path: "{{ cert_dir }}"
+        state: directory
+        owner: yugabyte
+        group: yugabyte
+        mode: '0755'
+
+    - name: Copy CA cert
+      copy:
+        src: "{{ base_dir }}/secure-data/ca.crt"
+        dest: "{{ cert_dir }}/ca.crt"
+
+    - name: Copy node cert
+      copy:
+        src: "{{ base_dir }}/{{ ansible_host }}/node.{{ ansible_host }}.crt"
+        dest: "{{ cert_dir }}/node.crt"
+
+    - name: Copy node key
+      copy:
+        src: "{{ base_dir }}/{{ ansible_host }}/node.{{ ansible_host }}.key"
+        dest: "{{ cert_dir }}/node.key"
+        mode: '0400'
