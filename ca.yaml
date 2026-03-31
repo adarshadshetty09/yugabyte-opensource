@@ -1,59 +1,135 @@
-- name: Yugabyte TLS Setup Automation
+---
+# =========================
+# PLAY 1: Generate Certs
+# =========================
+- name: Yugabyte TLS - Generate Certificates
+  hosts: localhost
+  gather_facts: no
+
+  vars:
+    base_dir: "/home/ansible/certs"
+    ca_dir: "{{ base_dir }}/ca"
+    nodes_dir: "{{ base_dir }}/nodes"
+    nodes: "{{ groups['yugabyte_nodes'] }}"
+
+  tasks:
+
+    - name: Create directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ ca_dir }}"
+        - "{{ nodes_dir }}"
+
+    - name: Generate CA private key
+      command: openssl genrsa -out {{ ca_dir }}/ca.key 2048
+      args:
+        creates: "{{ ca_dir }}/ca.key"
+
+    - name: Generate CA certificate
+      command: >
+        openssl req -x509 -new -nodes
+        -key {{ ca_dir }}/ca.key
+        -sha256 -days 3650
+        -subj "/O=Yugabyte/CN=Yugabyte-CA"
+        -out {{ ca_dir }}/ca.crt
+      args:
+        creates: "{{ ca_dir }}/ca.crt"
+
+    - name: Generate node certificates
+      loop: "{{ nodes }}"
+      loop_control:
+        loop_var: node
+      block:
+
+        - name: Create node dir
+          file:
+            path: "{{ nodes_dir }}/{{ hostvars[node].ansible_host }}"
+            state: directory
+
+        - name: Generate node key
+          command: >
+            openssl genrsa -out
+            {{ nodes_dir }}/{{ hostvars[node].ansible_host }}/node.{{ hostvars[node].ansible_host }}.key 2048
+
+        - name: Generate CSR
+          command: >
+            openssl req -new
+            -key {{ nodes_dir }}/{{ hostvars[node].ansible_host }}/node.{{ hostvars[node].ansible_host }}.key
+            -subj "/O=Yugabyte/CN={{ hostvars[node].ansible_host }}"
+            -out {{ nodes_dir }}/{{ hostvars[node].ansible_host }}/node.csr
+
+        - name: Sign certificate
+          command: >
+            openssl x509 -req
+            -in {{ nodes_dir }}/{{ hostvars[node].ansible_host }}/node.csr
+            -CA {{ ca_dir }}/ca.crt
+            -CAkey {{ ca_dir }}/ca.key
+            -CAcreateserial
+            -out {{ nodes_dir }}/{{ hostvars[node].ansible_host }}/node.{{ hostvars[node].ansible_host }}.crt
+            -days 3650
+            -sha256
+
+
+# =========================
+# PLAY 2: Copy Certs
+# =========================
+- name: Yugabyte TLS - Copy Certificates
   hosts: yugabyte_nodes
   become: yes
 
   vars:
     cert_dir: /home/yugabyte/certs
-    ca_src: /home/yugabyte/secure-data/ca.crt
-    key_src: "/home/yugabyte/{{ inventory_hostname }}/node.{{ ansible_host }}.key"
-    crt_src: "/home/yugabyte/{{ inventory_hostname }}/node.{{ ansible_host }}.crt"
+    base_dir: "/home/ansible/certs"
 
   tasks:
 
-    - name: Create cert directory
+    - name: Create cert dir
       file:
         path: "{{ cert_dir }}"
         state: directory
         owner: yugabyte
         group: yugabyte
-        mode: '0755'
 
     - name: Copy CA cert
       copy:
-        src: "{{ ca_src }}"
+        src: "{{ base_dir }}/ca/ca.crt"
         dest: "{{ cert_dir }}/ca.crt"
-        owner: yugabyte
-        group: yugabyte
-        mode: '0444'
-
-    - name: Copy node key
-      copy:
-        src: "{{ key_src }}"
-        dest: "{{ cert_dir }}/node.key"
-        owner: yugabyte
-        group: yugabyte
-        mode: '0400'
 
     - name: Copy node cert
       copy:
-        src: "{{ crt_src }}"
+        src: "{{ base_dir }}/nodes/{{ ansible_host }}/node.{{ ansible_host }}.crt"
         dest: "{{ cert_dir }}/node.crt"
-        owner: yugabyte
-        group: yugabyte
-        mode: '0444'
+
+    - name: Copy node key
+      copy:
+        src: "{{ base_dir }}/nodes/{{ ansible_host }}/node.{{ ansible_host }}.key"
+        dest: "{{ cert_dir }}/node.key"
+        mode: '0400'
+
+
+# =========================
+# PLAY 3: Restart Yugabyte
+# =========================
+- name: Yugabyte TLS - Restart Services
+  hosts: yugabyte_nodes
+  become: yes
+
+  tasks:
 
     - name: Stop Yugabyte
-      shell: |
-        sudo -u yugabyte ./bin/yugabyted stop
+      shell: ./bin/yugabyted stop
       args:
         chdir: /home/yugabyte/yugabyte-2024.2.8.0
       ignore_errors: yes
 
     - name: Start Yugabyte with TLS
-      shell: |
-        sudo -u yugabyte ./bin/yugabyted start \
-          --base_dir=/home/yugabyte/data \
-          --certs_dir={{ cert_dir }} \
-          --secure \
+      shell: >
+        ./bin/yugabyted start
+        --base_dir=/home/yugabyte/data
+        --certs_dir=/home/yugabyte/certs
+        --secure
       args:
         chdir: /home/yugabyte/yugabyte-2024.2.8.0
