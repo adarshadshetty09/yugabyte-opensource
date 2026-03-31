@@ -72,7 +72,6 @@ chmod 600 ~/.ssh/id_rsa
 └──────────┘ └──────────┘ └──────────┘
 ```
 
-
 ```
                 ┌────────────────────┐
                 │   YugabyteDB       │
@@ -92,8 +91,6 @@ Native Metrics                     Postgres Exporter
                    Grafana
 ```
 
-
-
 ```
 mount.yaml
  ├── detect disk (10G + unused)
@@ -101,4 +98,24 @@ mount.yaml
  ├── partition
  ├── filesystem
  ├── mount
+```
+
+
+
+
+```
+| Step          | Manual         | Ansible     |
+| ------------- | -------------- | ----------- |
+| Create dirs   | mkdir          | file module |
+| CA config     | cat            | copy module |
+| CA init       | touch/echo     | file + copy |
+| CA key/cert   | openssl        | command     |
+| Node configs  | cat            | template    |
+| Node keys     | openssl        | command     |
+| CSR           | openssl        | command     |
+| Sign cert     | openssl ca     | command     |
+| Verify        | openssl verify | command     |
+| Copy to nodes | cp             | copy module |
+| Restart DB    | manual         | shell       |
+
 ```

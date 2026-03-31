@@ -1,107 +1,121 @@
 ---
 # =========================
-# PLAY 1: Generate Certs
+# PLAY 1: Generate CA + Certs
 # =========================
-- name: Yugabyte TLS - Generate Certificates
+- name: TLS Setup - Generate Certificates
   hosts: localhost
   gather_facts: no
+  become: yes
 
   vars:
     base_dir: "/home/ansible/certs"
-    ca_dir: "{{ base_dir }}/ca"
+    ca_dir: "{{ base_dir }}/secure-data"
     nodes_dir: "{{ base_dir }}/nodes"
     nodes: "{{ groups['yugabyte_nodes'] }}"
 
   tasks:
 
+    - name: Install OpenSSL
+      package:
+        name: openssl
+        state: present
+
     - name: Create directories
       file:
         path: "{{ item }}"
         state: directory
-        mode: '0755'
       loop:
         - "{{ ca_dir }}"
         - "{{ nodes_dir }}"
 
-    - name: Generate CA private key
+    - name: Create CA config
+      copy:
+        dest: "{{ ca_dir }}/ca.conf"
+        content: |
+          [ ca ]
+          default_ca = my_ca
+
+          [ my_ca ]
+          default_days = 3650
+          serial = {{ ca_dir }}/serial.txt
+          database = {{ ca_dir }}/index.txt
+          default_md = sha256
+          policy = my_policy
+
+          [ my_policy ]
+          organizationName = supplied
+          commonName = supplied
+
+          [ req ]
+          prompt = no
+          distinguished_name = my_distinguished_name
+          x509_extensions = my_extensions
+
+          [ my_distinguished_name ]
+          organizationName = Yugabyte
+          commonName = CA for YugabyteDB
+
+          [ my_extensions ]
+          keyUsage = critical,digitalSignature,nonRepudiation,keyEncipherment,keyCertSign
+          basicConstraints = critical,CA:true,pathlen:1
+
+    - name: Initialize CA DB
+      file:
+        path: "{{ item }}"
+        state: touch
+      loop:
+        - "{{ ca_dir }}/index.txt"
+
+    - name: Initialize serial
+      copy:
+        dest: "{{ ca_dir }}/serial.txt"
+        content: "01"
+
+    - name: Generate CA key
       command: openssl genrsa -out {{ ca_dir }}/ca.key 2048
       args:
         creates: "{{ ca_dir }}/ca.key"
 
-    - name: Generate CA certificate
+    - name: Generate CA cert
       command: >
-        openssl req -x509 -new -nodes
+        openssl req -new -x509
+        -days 3650
+        -config {{ ca_dir }}/ca.conf
         -key {{ ca_dir }}/ca.key
-        -sha256 -days 3650
-        -subj "/O=Yugabyte/CN=Yugabyte-CA"
         -out {{ ca_dir }}/ca.crt
       args:
         creates: "{{ ca_dir }}/ca.crt"
 
-    - name: Generate node certificates
-      include_tasks: generate-node-cert.yml
+    - name: Generate node configs
+      template:
+        src: templates/node.conf.j2
+        dest: "{{ nodes_dir }}/{{ hostvars[item].ansible_host }}.conf"
       loop: "{{ nodes }}"
-      loop_control:
-        loop_var: node
 
+    - name: Generate node keys
+      command: >
+        openssl genrsa -out
+        {{ nodes_dir }}/node.{{ hostvars[item].ansible_host }}.key 2048
+      loop: "{{ nodes }}"
 
-# =========================
-# PLAY 2: Copy Certs
-# =========================
-- name: Yugabyte TLS - Copy Certificates
-  hosts: yugabyte_nodes
-  become: yes
+    - name: Generate CSR
+      command: >
+        openssl req -new
+        -config {{ nodes_dir }}/{{ hostvars[item].ansible_host }}.conf
+        -key {{ nodes_dir }}/node.{{ hostvars[item].ansible_host }}.key
+        -out {{ nodes_dir }}/node.{{ hostvars[item].ansible_host }}.csr
+      loop: "{{ nodes }}"
 
-  vars:
-    cert_dir: /home/yugabyte/certs
-    base_dir: "/home/ansible/certs"
-
-  tasks:
-
-    - name: Create cert dir
-      file:
-        path: "{{ cert_dir }}"
-        state: directory
-        owner: yugabyte
-        group: yugabyte
-
-    - name: Copy CA cert
-      copy:
-        src: "{{ base_dir }}/ca/ca.crt"
-        dest: "{{ cert_dir }}/ca.crt"
-
-    - name: Copy node cert
-      copy:
-        src: "{{ base_dir }}/nodes/{{ ansible_host }}/node.{{ ansible_host }}.crt"
-        dest: "{{ cert_dir }}/node.crt"
-
-    - name: Copy node key
-      copy:
-        src: "{{ base_dir }}/nodes/{{ ansible_host }}/node.{{ ansible_host }}.key"
-        dest: "{{ cert_dir }}/node.key"
-        mode: '0400'
-
-
-# =========================
-# PLAY 3: Restart Yugabyte
-# =========================
-- name: Yugabyte TLS - Restart Services
-  hosts: yugabyte_nodes
-  become: yes
-
-  tasks:
-
-    - name: Stop Yugabyte
-      shell: ./bin/yugabyted stop
-      args:
-        chdir: /home/yugabyte/yugabyte-2024.2.8.0
-      ignore_errors: yes
-
-    - name: Start Yugabyte with TLS
-      shell: >
-        ./bin/yugabyted start
-        --base_dir=/home/yugabyte/data
-        --certs_dir=/home/yugabyte/certs
-        --secure
-      args:
-        chdir: /home/yugabyte/yugabyte-2024.2.8.0
+    - name: Sign certificates
+      command: >
+        openssl ca -config {{ ca_dir }}/ca.conf
+        -keyfile {{ ca_dir }}/ca.key
+        -cert {{ ca_dir }}/ca.crt
+        -policy my_policy
+        -out {{ nodes_dir }}/node.{{ hostvars[item].ansible_host }}.crt
+        -in {{ nodes_dir }}/node.{{ hostvars[item].ansible_host }}.csr
+        -days 3650
+        -batch
+        -extfile {{ nodes_dir }}/{{ hostvars[item].ansible_host }}.conf
+        -extensions req_ext
+      loop: "{{ nodes }}"
