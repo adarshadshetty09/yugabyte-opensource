@@ -7,7 +7,7 @@
   tasks:
 
     - name: Stop Yugabyte
-      shell: ./bin/yugabyted stop
+      shell: ./bin/yugabyted stop --base_dir=/mnt/yba-data
       args:
         chdir: /home/yugabyte/yugabyte-2024.2.8.0
       ignore_errors: yes
@@ -19,7 +19,7 @@
     - name: Start Yugabyte with TLS
       shell: >
         ./bin/yugabyted start
-        --base_dir=/home/yugabyte/data
+        --base_dir=/mnt/yba-data
         --certs_dir=/home/yugabyte/certs
         --secure
       args:
