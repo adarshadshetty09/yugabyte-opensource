@@ -39,6 +39,7 @@
   command: >
     {{ bin_path }} start
     --advertise_address={{ ansible_host }}
+    --backup_daemon=true
     --base_dir={{ base_dir }}
     --cloud_location={{ cloud_location }}
   become_user: yugabyte
@@ -70,6 +71,7 @@
   command: >
     {{ bin_path }} start
     --advertise_address={{ ansible_host }}
+    --backup_daemon=true
     --join={{ master_ip }}
     --base_dir={{ base_dir }}
     --cloud_location={{ cloud_location }}
