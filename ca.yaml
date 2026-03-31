@@ -133,3 +133,10 @@
         --secure
       args:
         chdir: /home/yugabyte/yugabyte-2024.2.8.0
+
+
+- name: Generate node certificates
+  include_tasks: generate-node-cert.yml
+  loop: "{{ nodes }}"
+  loop_control:
+    loop_var: node
