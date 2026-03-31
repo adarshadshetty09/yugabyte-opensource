@@ -91,4 +91,4 @@
 
     - name: Verify the Generated CA Certs 
       command: >
-        openssl x509 -in secure-data/ca.crt -text -noout
+         openssl x509 -in {{ base_dir }}/secure-data/ca.crt -text -noout
