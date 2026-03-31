@@ -1,3 +1,4 @@
+---
 - name: Setup TLS directory structure (Yugabyte style)
   hosts: localhost
   gather_facts: no
@@ -20,3 +21,60 @@
         state: directory
         mode: '0755'
       loop: "{{ nodes }}"
+
+    - name: Create CA config
+      copy:
+        dest: "{{ base_dir }}/secure-data/ca.conf"
+        content: |
+          [ ca ]
+          default_ca = my_ca
+
+          [ my_ca ]
+          default_days = 3650
+          serial = {{ base_dir }}/secure-data/serial.txt
+          database = {{ base_dir }}/secure-data/index.txt
+          new_certs_dir = {{ base_dir }}/secure-data/certs
+          default_md = sha256
+          policy = my_policy
+
+          [ my_policy ]
+          organizationName = supplied
+          commonName = supplied
+
+          [ req ]
+          prompt = no
+          distinguished_name = my_distinguished_name
+          x509_extensions = my_extensions
+
+          [ my_distinguished_name ]
+          organizationName = Yugabyte
+          commonName = CA for YugabyteDB
+
+          [ my_extensions ]
+          keyUsage = critical,digitalSignature,nonRepudiation,keyEncipherment,keyCertSign
+          basicConstraints = critical,CA:true,pathlen:1
+
+    - name: Create index.txt
+      file:
+        path: "{{ base_dir }}/secure-data/index.txt"
+        state: touch
+
+    - name: Create serial.txt
+      copy:
+        dest: "{{ base_dir }}/secure-data/serial.txt"
+        content: "01"
+
+    - name: Create CA cert storage dir
+      file:
+        path: "{{ base_dir }}/secure-data/certs"
+        state: directory
+
+    - name: Generate CA private key
+      command: openssl genrsa -out {{ base_dir }}/secure-data/ca.key 2048
+      args:
+        creates: "{{ base_dir }}/secure-data/ca.key"
+
+    - name: Set permissions on CA key
+      file:
+        path: "{{ base_dir }}/secure-data/ca.key"
+        mode: '0400'
