@@ -10,6 +10,11 @@
 
   tasks:
 
+    - name: Install OpenSSL
+      package:
+        name: openssl
+        state: present
+
     - name: Create secure-data directory
       file:
         path: "{{ base_dir }}/secure-data"
