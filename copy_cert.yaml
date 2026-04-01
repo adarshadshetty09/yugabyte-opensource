@@ -6,6 +6,17 @@
     base_dir: "/home/ansible"
     cert_dir: "/home/yugabyte/certs"
 
+  pre_tasks:
+
+    - name: Fix key permissions on control node
+      file:
+        path: "{{ base_dir }}/{{ inventory_hostname }}/node.{{ inventory_hostname }}.key"
+        owner: ansible
+        group: ansible
+        mode: '0644'
+      delegate_to: localhost
+      run_once: false
+
   tasks:
 
     - name: Create cert directory
