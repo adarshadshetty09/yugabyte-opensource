@@ -13,85 +13,101 @@
 
   tasks:
 
-    #  Check current state
-    - name: Check final YBC
+    # -------------------------------
+    # Check current state (source of truth)
+    # -------------------------------
+    - name: Check YBC binary
       stat:
-        path: "{{ ybc_final_dir }}"
-      register: ybc_final
-
-    - name: Check share YBC
-      stat:
-        path: "{{ ybc_share_dir }}"
-      register: ybc_share
-
-    - name: Check extracted dir
-      stat:
-        path: "{{ ybc_extract_dir }}"
-      register: ybc_extracted
+        path: "{{ ybc_final_dir }}/bin/yb-controller-server"
+      register: ybc_binary
 
     - name: Check tar file exists
       stat:
         path: "{{ ybc_src }}"
       register: ybc_tar_file
 
-    #  Extract only if needed
+    # -------------------------------
+    # Extract (only if not installed)
+    # -------------------------------
     - name: Extract YBC
       unarchive:
         src: "{{ ybc_src }}"
         dest: "{{ yb_home }}/share/"
         remote_src: yes
       when:
+        - not ybc_binary.stat.exists
         - ybc_tar_file.stat.exists
-        - not ybc_final.stat.exists
-        - not ybc_share.stat.exists
-        - not ybc_extracted.stat.exists
 
-    #  Rename extracted folder → share/ybc
-    - name: Rename extracted folder
-      command: mv "{{ ybc_extract_dir }}" "{{ ybc_share_dir }}"
-      args:
-        removes: "{{ ybc_extract_dir }}"
-      when:
-        - ybc_extracted.stat.exists
-        - not ybc_share.stat.exists
-
-    #  Move to final location (SAFE + idempotent)
-    - name: Move YBC to final location (safe)
+    # -------------------------------
+    # Move to final location safely
+    # -------------------------------
+    - name: Move YBC to final location
       shell: |
-        if [ -d "{{ ybc_share_dir }}" ] && [ ! -d "{{ ybc_final_dir }}" ]; then
+        if [ -d "{{ ybc_extract_dir }}" ] && [ ! -d "{{ ybc_final_dir }}" ]; then
+          mv "{{ ybc_extract_dir }}" "{{ ybc_final_dir }}"
+        elif [ -d "{{ ybc_share_dir }}" ] && [ ! -d "{{ ybc_final_dir }}" ]; then
           mv "{{ ybc_share_dir }}" "{{ ybc_final_dir }}"
         fi
       args:
         creates: "{{ ybc_final_dir }}"
-      when:
-        - ybc_share.stat.exists
-        - not ybc_final.stat.exists
+      when: not ybc_binary.stat.exists
 
-    #  Refresh state after move
-    - name: Refresh final YBC status
-      stat:
-        path: "{{ ybc_final_dir }}"
-      register: ybc_final_updated
-
-    #  Cleanup tar file
-    - name: Remove tar file
+    # -------------------------------
+    # Fix ownership (VERY IMPORTANT)
+    # -------------------------------
+    - name: Ensure correct ownership
       file:
-        path: "{{ ybc_src }}"
-        state: absent
-      when: ybc_final_updated.stat.exists
+        path: "{{ ybc_final_dir }}"
+        owner: yugabyte
+        group: yugabyte
+        recurse: yes
+      when: not ybc_binary.stat.exists
 
-    #  Check if already initialized
+    # -------------------------------
+    # Fix permissions
+    # -------------------------------
+    - name: Ensure binaries executable
+      file:
+        path: "{{ ybc_final_dir }}/bin"
+        mode: '0755'
+        recurse: yes
+      when: not ybc_binary.stat.exists
+
+    # -------------------------------
+    # Verify installation (HARD CHECK)
+    # -------------------------------
+    - name: Verify YBC binary exists
+      stat:
+        path: "{{ ybc_final_dir }}/bin/yb-controller-server"
+      register: ybc_binary_final
+
+    - name: Fail if YBC installation failed
+      fail:
+        msg: "YBC installation failed - yb-controller-server not found"
+      when: not ybc_binary_final.stat.exists
+
+    # -------------------------------
+    # Run post install (only once)
+    # -------------------------------
     - name: Check if YBC already initialized
       stat:
         path: "{{ ybc_final_dir }}/controller"
       register: ybc_initialized
 
-    #  Run post install (ONLY once)
     - name: Run post install
       shell: >
         {{ ybc_final_dir }}/bin/post_install.sh
         --yugabytedb_dir {{ yb_home }}
         --advertise_address {{ ansible_host }}
       when:
-        - ybc_final_updated.stat.exists
+        - ybc_binary_final.stat.exists
         - not ybc_initialized.stat.exists
+
+    # -------------------------------
+    # Cleanup tar (optional)
+    # -------------------------------
+    - name: Remove tar file
+      file:
+        path: "{{ ybc_src }}"
+        state: absent
+      when: ybc_binary_final.stat.exists
