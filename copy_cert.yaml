@@ -24,7 +24,7 @@
         group: yugabyte
         mode: '0644'
 
-    - name: Copy node cert (NO RENAME)
+    - name: Copy node cert
       copy:
         src: "{{ base_dir }}/{{ ansible_host }}/node.{{ ansible_host }}.crt"
         dest: "{{ cert_dir }}/node.{{ ansible_host }}.crt"
@@ -32,10 +32,12 @@
         group: yugabyte
         mode: '0644'
 
-    - name: Copy node key (NO RENAME)
+    - name: Copy node key
       copy:
         src: "{{ base_dir }}/{{ ansible_host }}/node.{{ ansible_host }}.key"
         dest: "{{ cert_dir }}/node.{{ ansible_host }}.key"
         owner: yugabyte
         group: yugabyte
         mode: '0400'
+      delegate_facts: localhost
+      become: yes
