@@ -39,5 +39,3 @@
         owner: yugabyte
         group: yugabyte
         mode: '0400'
-      delegate_facts: localhost
-      become: yes
