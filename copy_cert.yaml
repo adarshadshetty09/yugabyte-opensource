@@ -8,14 +8,20 @@
 
   pre_tasks:
 
-    - name: Fix key permissions on control node
+    - name: Check if key exists
+      stat:
+        path: "{{ base_dir }}/{{ ansible_host }}/node.{{ ansible_host }}.key"
+      delegate_to: localhost
+      register: key_file
+
+    - name: Fix key permissions
       file:
-        path: "{{ base_dir }}/{{ inventory_hostname }}/node.{{ inventory_hostname }}.key"
+        path: "{{ base_dir }}/{{ ansible_host }}/node.{{ ansible_host }}.key"
         owner: ansible
         group: ansible
         mode: '0644'
       delegate_to: localhost
-      run_once: false
+      when: key_file.stat.exists
 
   tasks:
 
