@@ -1,6 +1,7 @@
 ---
 - name: Setup TLS directory structure (Yugabyte style)
   hosts: localhost
+  become: yes 
   gather_facts: no
 
   vars:
@@ -14,6 +15,7 @@
       package:
         name: openssl
         state: present
+      become: yes
 
     - name: Create secure-data directory
       file:
