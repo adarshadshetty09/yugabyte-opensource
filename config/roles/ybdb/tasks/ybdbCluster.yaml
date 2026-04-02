@@ -90,6 +90,12 @@
   delay: 10
   until: "'Running' in cluster_ready.stdout"
   changed_when: false
+  when: is_primary
+
+
+- name: Extra wait before follower join
+  pause:
+    seconds: 20
   when: not is_primary
 
 # ===============================
