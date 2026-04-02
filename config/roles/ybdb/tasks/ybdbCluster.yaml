@@ -76,6 +76,22 @@
     timeout: 300
   when: is_primary
 
+
+
+# ===============================
+# WAIT FOR LEADER STABILITY (IMPORTANT)
+# ===============================
+
+- name: Wait for cluster leader to stabilize
+  command: "{{ bin_path }} status --base_dir={{ base_dir }}"
+  become_user: yugabyte
+  register: cluster_ready
+  retries: 10
+  delay: 10
+  until: "'Running' in cluster_ready.stdout"
+  changed_when: false
+  when: not is_primary
+
 # ===============================
 # STEP 4: FOLLOWER NODES
 # ===============================
