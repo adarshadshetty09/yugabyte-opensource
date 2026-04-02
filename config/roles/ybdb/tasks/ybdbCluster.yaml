@@ -31,6 +31,17 @@
   pause:
     seconds: 10
 
+
+- name: Check certs directory exists
+  stat:
+    path: "{{ certs_dir }}"
+  register: certs_check
+
+- name: Fail if certs missing
+  fail:
+    msg: "TLS certs not found at {{ certs_dir }}"
+  when: not certs_check.stat.exists
+
 # ===============================
 # STEP 3: PRIMARY NODE
 # ===============================
@@ -42,6 +53,8 @@
     --backup_daemon=true
     --base_dir={{ base_dir }}
     --cloud_location={{ cloud_location }}
+    --certs_dir={{ certs_dir }}
+    --secure
   become_user: yugabyte
   when: is_primary
 
@@ -75,6 +88,8 @@
     --join={{ master_ip }}
     --base_dir={{ base_dir }}
     --cloud_location={{ cloud_location }}
+    --certs_dir={{ certs_dir }}
+    --secure
   become_user: yugabyte
   when: not is_primary
   throttle: 1        

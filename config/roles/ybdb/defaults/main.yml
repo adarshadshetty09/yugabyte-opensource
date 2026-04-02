@@ -32,3 +32,5 @@ destroy_cluster: false
 cloud: cloud1
 
 cloud_location: "{{ cloud }}.{{ hostvars[inventory_hostname].region }}.{{ hostvars[inventory_hostname].zone }}"
+
+certs_dir: /home/yugabyte/certs
