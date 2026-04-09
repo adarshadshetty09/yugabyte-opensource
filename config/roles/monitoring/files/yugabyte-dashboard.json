@@ -1,331 +1,141 @@
 {
-  "annotations": { "list": [] },
-  "editable": true,
-  "schemaVersion": 38,
-  "version": 7,
-  "title": "🚀 YugabyteDB Enterprise Monitoring (Dynamic)",
+"annotations": { "list": [] },
+"editable": true,
+"schemaVersion": 38,
+"version": 1,
+"title": "🐘 PostgreSQL Clean Monitoring Dashboard",
 
-  "templating": {
-    "list": [
-      {
-        "name": "node",
-        "type": "query",
-        "datasource": "Prometheus",
-        "query": "label_values(up, node_name)",
-        "includeAll": true,
-        "multi": true
-      }
-    ]
-  },
+"panels": [
 
-  "panels": [
-
-    { "type": "stat", "title": "Masters UP",
-      "targets": [{ "expr": "sum(up{job=\"yugabyte-masters\", node_name=~\"$node\"})" }],
-      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 }
-    },
-
-    { "type": "stat", "title": "TServers UP",
-      "targets": [{ "expr": "sum(up{job=\"yugabyte-tservers\", node_name=~\"$node\"})" }],
-      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 }
-    },
-
-    { "type": "stat", "title": "Cluster Memory (MB)",
-      "targets": [{ "expr": "sum(mem_tracker_server{node_name=~\"$node\"}) / 1024 / 1024" }],
-      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 }
-    },
-
-    { "type": "stat", "title": "Raft Threads",
-      "targets": [{ "expr": "sum(threads_running_raft{node_name=~\"$node\"})" }],
-      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 }
-    },
-
-    { "type": "timeseries", "title": "Memory per Node",
-      "targets": [{ "expr": "mem_tracker_server{node_name=~\"$node\"} / 1024 / 1024", "legendFormat": "{{node_name}} ({{node_ip}})" }],
-      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 }
-    },
-
-    { "type": "timeseries", "title": "Raft Threads per Node",
-      "targets": [{ "expr": "threads_running_raft{node_name=~\"$node\"}", "legendFormat": "{{node_name}} ({{node_ip}})" }],
-      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 }
-    },
-
-    { "type": "timeseries", "title": "Consensus Traffic",
-      "targets": [
-        { "expr": "rate(proxy_request_bytes_yb_consensus_ConsensusService_UpdateConsensus{node_name=~\"$node\"}[1m])", "legendFormat": "{{node_name}} Req" },
-        { "expr": "rate(proxy_response_bytes_yb_consensus_ConsensusService_UpdateConsensus{node_name=~\"$node\"}[1m])", "legendFormat": "{{node_name}} Resp" }
-      ],
-      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 }
-    },
-
-    { "type": "timeseries", "title": "RPC Queue Pressure",
-      "targets": [{ "expr": "sum by(node_name) (rpcs_in_queue_yb_consensus_ConsensusService{node_name=~\"$node\"})", "legendFormat": "{{node_name}}" }],
-      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 }
-    },
-
-    { "type": "timeseries", "title": "YSQL TPS",
-      "targets": [{ "expr": "sum(rate(handler_latency_yb_tserver_PgClientService_Perform_count{node_name=~\"$node\"}[1m]))", "legendFormat": "TPS" }],
-      "gridPos": { "x": 0, "y": 20, "w": 8, "h": 6 }
-    },
-
-    { "type": "timeseries", "title": "YSQL Avg Latency",
-      "targets": [{ "expr": "rate(handler_latency_yb_tserver_PgClientService_Perform_sum{node_name=~\"$node\"}[1m]) / rate(handler_latency_yb_tserver_PgClientService_Perform_count{node_name=~\"$node\"}[1m])", "legendFormat": "Latency" }],
-      "gridPos": { "x": 8, "y": 20, "w": 8, "h": 6 }
-    },
-
-    { "type": "timeseries", "title": "YSQL RPC Queue",
-      "targets": [{ "expr": "sum by(node_name) (rpcs_in_queue_yb_tserver_PgClientService{node_name=~\"$node\"})", "legendFormat": "{{node_name}}" }],
-      "gridPos": { "x": 16, "y": 20, "w": 8, "h": 6 }
-    },
-
-    { "type": "timeseries", "title": "YCQL TPS",
-      "targets": [
-        { "expr": "sum(rate(handler_latency_yb_tserver_TabletServerService_Write_count{node_name=~\"$node\"}[1m]))", "legendFormat": "Writes" },
-        { "expr": "sum(rate(handler_latency_yb_tserver_TabletServerService_Read_count{node_name=~\"$node\"}[1m]))", "legendFormat": "Reads" }
-      ],
-      "gridPos": { "x": 0, "y": 26, "w": 12, "h": 6 }
-    },
-
-    { "type": "timeseries", "title": "Disk Usage",
-      "targets": [{ "expr": "sum by(node_name) (rocksdb_current_version_sst_files_size{node_name=~\"$node\"})", "legendFormat": "{{node_name}}" }],
-      "gridPos": { "x": 12, "y": 26, "w": 12, "h": 6 }
-    },
-
-    { "type": "timeseries", "title": "Compaction Load",
-      "targets": [
-        { "expr": "rate(rocksdb_compact_read_bytes{node_name=~\"$node\"}[1m])", "legendFormat": "Read" },
-        { "expr": "rate(rocksdb_compact_write_bytes{node_name=~\"$node\"}[1m])", "legendFormat": "Write" }
-      ],
-      "gridPos": { "x": 0, "y": 32, "w": 12, "h": 6 }
-    },
-
-    { "type": "timeseries", "title": "CPU Usage",
-      "targets": [{ "expr": "rate(process_cpu_seconds_total{node_name=~\"$node\"}[1m])", "legendFormat": "{{node_name}} ({{node_ip}})" }],
-      "gridPos": { "x": 12, "y": 32, "w": 12, "h": 6 }
-    },
-
-    {
-      "type": "bargauge",
-      "title": "🔥 INSERT per Node (Total)",
-      "targets": [
-        {
-          "expr": "sum by (node) (label_replace(handler_latency_yb_ysqlserver_SQLProcessor_InsertStmt_count, \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
-          "legendFormat": "{{node}}"
-        }
-      ],
-      "gridPos": { "x": 0, "y": 38, "w": 8, "h": 6 }
-    },
-
-    {
-      "type": "bargauge",
-      "title": "🔥 SELECT per Node (Total)",
-      "targets": [
-        {
-          "expr": "sum by (node) (label_replace(handler_latency_yb_ysqlserver_SQLProcessor_SelectStmt_count, \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
-          "legendFormat": "{{node}}"
-        }
-      ],
-      "gridPos": { "x": 8, "y": 38, "w": 8, "h": 6 }
-    },
-
-    {
-      "type": "bargauge",
-      "title": "🔥 TPS per Node",
-      "targets": [
-        {
-          "expr": "sum by (node) (label_replace(rate(handler_latency_yb_ysqlserver_SQLProcessor_Transactions_count[5m]), \"node\", \"$1\", \"instance\", \"(.*):.*\"))",
-          "legendFormat": "{{node}}"
-        }
-      ],
-      "gridPos": { "x": 16, "y": 38, "w": 8, "h": 6 }
-    },
-    {
-"type": "table",
-"title": "📦 Node Storage (SST + RAM + OPS)",
-"datasource": "Prometheus",
-"targets": [
 {
-"expr": "up{job=\"yugabyte-tservers\", node_name=~\"$node\"}",
-"refId": "A"
-},
-{
-"expr": "process_resident_memory_bytes{job=\"yugabyte-tservers\", node_name=~\"$node\"}",
-"refId": "B"
-},
-{
-"expr": "sum by (instance) (rocksdb_current_version_sst_files_size{job=\"yugabyte-tservers\", node_name=~\"$node\"})",
-"refId": "C"
-},
-{
-"expr": "sum by (instance) (rate(handler_latency_yb_tserver_TabletServerService_Read_count{node_name=~\"$node\"}[1m]))",
-"refId": "D"
-},
-{
-"expr": "sum by (instance) (rate(handler_latency_yb_tserver_TabletServerService_Write_count{node_name=~\"$node\"}[1m]))",
-"refId": "E"
-}
-],
-"transformations": [
-  {
-    "id": "labelsToFields",
-    "options": {}
-  },
-  {
-    "id": "reduce",
-    "options": {
-      "reducers": ["lastNotNull"],
-      "fields": ""
-    }
-  },
-  {
-    "id": "joinByField",
-    "options": {
-      "byField": "instance"
-    }
-  },
-{
-  "id": "organize",
-  "options": {
-    "renameByName": {
-      "instance": "Node",
-      "Value #A": "Status",
-      "Value #B": "RAM",
-      "Value #C": "SST Size",
-      "Value #D": "Read OPS",
-      "Value #E": "Write OPS"
-    },
-    "indexByName": {
-      "Node": 0,
-      "Status": 1,
-      "RAM": 2,
-      "SST Size": 3,
-      "Read OPS": 4,
-      "Write OPS": 5
-    }
-  }
-}
-],
-"fieldConfig": {
-"overrides": [
-{
-"matcher": { "id": "byName", "options": "Status" },
-"properties": [
-{
-"id": "mappings",
-"value": [
-{
-"type": "value",
-"options": {
-"1": { "text": "🟢 Live", "color": "green" },
-"0": { "text": "🔴 Down", "color": "red" }
-}
-}
-]
-}
-]
-},
-{
-"matcher": { "id": "byName", "options": "RAM" },
-"properties": [{ "id": "unit", "value": "bytes" }]
-},
-{
-"matcher": { "id": "byName", "options": "SST Size" },
-"properties": [{ "id": "unit", "value": "bytes" }]
-}
-]
-},
-"options": {
-"showHeader": true
-},
-"gridPos": {
-"x": 0,
-"y": 44,
-"w": 24,
-"h": 10
-}
-},
-{
-  "type": "table",
-  "title": "🗄️ PostgreSQL DB Activity (Clean)",
-  "datasource": "Prometheus",
-
+  "type": "stat",
+  "title": "🚨 PostgreSQL Status",
   "targets": [
-    {
-      "expr": "pg_database_size_bytes",
-      "refId": "A"
-    },
-    {
-      "expr": "sum by(datname) (pg_stat_activity_count)",
-      "refId": "B"
-    },
-    {
-      "expr": "sum by(datname) (pg_stat_activity_count{state=\"active\"})",
-      "refId": "C"
-    },
-    {
-      "expr": "sum by(datname) (pg_stat_activity_count{state=\"idle\"})",
-      "refId": "D"
-    },
-    {
-      "expr": "sum by(datname) (pg_locks_count)",
-      "refId": "E"
-    }
+    { "expr": "pg_up", "refId": "A" }
   ],
-
-  "transformations": [
-    {
-      "id": "reduce",
-      "options": {
-        "reducers": ["lastNotNull"]
-      }
-    },
-    {
-      "id": "joinByField",
-      "options": {
-        "byField": "datname"
-      }
-    },
-    {
-      "id": "organize",
-      "options": {
-        "renameByName": {
-          "datname": "Database",
-          "Value #A": "Size",
-          "Value #B": "Connections",
-          "Value #C": "Active",
-          "Value #D": "Idle",
-          "Value #E": "Locks"
-        }
-      }
-    }
-  ],
-
   "fieldConfig": {
     "overrides": [
       {
-        "matcher": { "id": "byName", "options": "Size" },
-        "properties": [{ "id": "unit", "value": "bytes" }]
+        "matcher": { "id": "byName", "options": "Value" },
+        "properties": [
+          {
+            "id": "mappings",
+            "value": [
+              {
+                "type": "value",
+                "options": {
+                  "1": { "text": "🟢 UP", "color": "green" },
+                  "0": { "text": "🔴 DOWN", "color": "red" }
+                }
+              }
+            ]
+          }
+        ]
       }
     ]
   },
-
-  "options": {
-    "showHeader": true
-  },
-
-  "gridPos": {
-    "x": 0,
-    "y": 54,
-    "w": 24,
-    "h": 10
-  }
+  "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 }
 },
+
+{
+  "type": "stat",
+  "title": "⚠️ Scrape Errors",
+  "targets": [
+    { "expr": "pg_exporter_last_scrape_error", "refId": "A" }
+  ],
+  "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 }
+},
+
+{
+  "type": "stat",
+  "title": "⏱ Scrape Duration (s)",
+  "targets": [
+    { "expr": "pg_exporter_last_scrape_duration_seconds", "refId": "A" }
+  ],
+  "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 }
+},
+
+{
+  "type": "stat",
+  "title": "🔗 Total Connections",
+  "targets": [
+    { "expr": "sum(pg_stat_activity_count)", "refId": "A" }
+  ],
+  "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 }
+},
+
+{
+  "type": "timeseries",
+  "title": "📊 Connections (Active vs Idle)",
+  "targets": [
+    {
+      "expr": "sum(pg_stat_activity_count{state=\"active\"})",
+      "legendFormat": "Active"
+    },
+    {
+      "expr": "sum(pg_stat_activity_count{state=\"idle\"})",
+      "legendFormat": "Idle"
+    }
+  ],
+  "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 }
+},
+
+{
+  "type": "timeseries",
+  "title": "⚡ Transactions Per Second (TPS)",
+  "targets": [
+    {
+      "expr": "rate(pg_stat_database_xact_commit[1m])",
+      "legendFormat": "{{datname}}"
+    }
+  ],
+  "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 }
+},
+
+{
+  "type": "timeseries",
+  "title": "⏱ Query Latency (Approx)",
+  "targets": [
+    {
+      "expr": "rate(pg_stat_database_blk_read_time[1m])",
+      "legendFormat": "Read Latency"
+    }
+  ],
+  "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 }
+},
+
+{
+  "type": "timeseries",
+  "title": "🔒 Locks",
+  "targets": [
+    {
+      "expr": "sum(pg_locks_count)",
+      "legendFormat": "Locks"
+    }
+  ],
+  "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 }
+},
+
+{
+  "type": "bargauge",
+  "title": "💾 Database Size",
+  "targets": [
+    {
+      "expr": "pg_database_size_bytes",
+      "legendFormat": "{{datname}}"
+    }
+  ],
+  "fieldConfig": {
+    "defaults": {
+      "unit": "bytes"
+    }
+  },
+  "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 }
+},
+
 {
   "type": "table",
-  "title": "🗄️ PostgreSQL DB Activity",
-  "datasource": "Prometheus",
-  "gridPos": { "x": 0, "y": 64, "w": 24, "h": 10 },
-
+  "title": "🗄️ Database Activity",
   "targets": [
     { "expr": "pg_database_size_bytes", "refId": "A" },
     { "expr": "sum by(datname) (pg_stat_activity_count)", "refId": "B" },
@@ -333,7 +143,6 @@
     { "expr": "sum by(datname) (pg_stat_activity_count{state=\"idle\"})", "refId": "D" },
     { "expr": "sum by(datname) (pg_locks_count)", "refId": "E" }
   ],
-
   "transformations": [
     { "id": "reduce", "options": { "reducers": ["lastNotNull"] } },
     { "id": "joinByField", "options": { "byField": "datname" } },
@@ -351,181 +160,29 @@
       }
     }
   ],
-
-  "fieldConfig": {
-    "overrides": [
-      {
-        "matcher": { "id": "byName", "options": "Size" },
-        "properties": [{ "id": "unit", "value": "bytes" }]
-      }
-    ]
-  },
-
-  "options": { "showHeader": true }
+  "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 }
 },
 
-{
-  "type": "timeseries",
-  "title": "⚡ PostgreSQL TPS",
-  "datasource": "Prometheus",
-  "gridPos": { "x": 0, "y": 74, "w": 12, "h": 8 },
-
-  "targets": [
-    {
-      "expr": "rate(pg_stat_database_xact_commit[1m])",
-      "legendFormat": "{{datname}}",
-      "refId": "A"
-    }
-  ]
-},
-
-{
-  "type": "timeseries",
-  "title": "📊 PostgreSQL Connections",
-  "datasource": "Prometheus",
-  "gridPos": { "x": 12, "y": 74, "w": 12, "h": 8 },
-
-  "targets": [
-    {
-      "expr": "sum by(datname) (pg_stat_activity_count)",
-      "legendFormat": "{{datname}}",
-      "refId": "A"
-    }
-  ]
-},
 {
   "type": "table",
-  "title": "🔁 Replication Health",
-  "datasource": "Prometheus",
-
+  "title": "🔁 Replication Status",
   "targets": [
-    {
-      "expr": "pg_replication_lag_seconds",
-      "refId": "A"
-    },
-    {
-      "expr": "pg_replication_is_replica",
-      "refId": "B"
-    }
+    { "expr": "pg_replication_lag_seconds", "refId": "A" },
+    { "expr": "pg_replication_is_replica", "refId": "B" }
   ],
-
   "transformations": [
-    {
-      "id": "reduce",
-      "options": { "reducers": ["lastNotNull"] }
-    },
+    { "id": "reduce", "options": { "reducers": ["lastNotNull"] } },
     {
       "id": "organize",
       "options": {
         "renameByName": {
-          "Value #A": "Replication Lag (sec)",
-          "Value #B": "Replica Status"
+          "Value #A": "Lag (sec)",
+          "Value #B": "Replica"
         }
       }
     }
   ],
-
-  "fieldConfig": {
-    "overrides": [
-      {
-        "matcher": { "id": "byName", "options": "Replica Status" },
-        "properties": [
-          {
-            "id": "mappings",
-            "value": [
-              {
-                "type": "value",
-                "options": {
-                  "1": { "text": "🟢 Replica", "color": "green" },
-                  "0": { "text": "🔴 Primary", "color": "blue" }
-                }
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-
-  "options": { "showHeader": true },
-  "gridPos": { "x": 0, "y": 26, "w": 24, "h": 6 }
-},
-{
-  "type": "table",
-  "title": "🧠 Cluster Info (RF / Encryption / Health)",
-  "datasource": "Prometheus",
-
-  "targets": [
-    {
-      "expr": "yb_cluster_replication_factor",
-      "refId": "A"
-    },
-    {
-      "expr": "yb_encryption_enabled",
-      "refId": "B"
-    },
-    {
-      "expr": "sum(up{job=\"yugabyte-masters\"})",
-      "refId": "C"
-    },
-    {
-      "expr": "sum(up{job=\"yugabyte-tservers\"})",
-      "refId": "D"
-    }
-  ],
-
-  "transformations": [
-    {
-      "id": "reduce",
-      "options": {
-        "reducers": ["lastNotNull"]
-      }
-    },
-    {
-      "id": "organize",
-      "options": {
-        "renameByName": {
-          "Value #A": "Replication Factor",
-          "Value #B": "Encryption",
-          "Value #C": "Masters UP",
-          "Value #D": "TServers UP"
-        }
-      }
-    }
-  ],
-
-  "fieldConfig": {
-    "overrides": [
-      {
-        "matcher": { "id": "byName", "options": "Encryption" },
-        "properties": [
-          {
-            "id": "mappings",
-            "value": [
-              {
-                "type": "value",
-                "options": {
-                  "1": { "text": "🔒 Enabled", "color": "green" },
-                  "0": { "text": "🔓 Disabled", "color": "red" }
-                }
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-
-  "options": {
-    "showHeader": true
-  },
-
-  "gridPos": {
-    "x": 0,
-    "y": 25,
-    "w": 24,
-    "h": 6
-  }
+  "gridPos": { "x": 0, "y": 28, "w": 24, "h": 8 }
 }
 ]
 }

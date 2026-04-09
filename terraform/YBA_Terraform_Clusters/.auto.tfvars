@@ -1,7 +1,7 @@
 ###### Global #########
 project_id         = "project-7b6bf38a-3ad2-4d2b-bdb"
 network_project_id = "default"
-region             = "northamerica-northeast1"
+region             = "us-south1"
 // kms_key_self_link  = "projects/project-7b6bf38a-3ad2-4d2b-bdb/locations/us-central1/keyRings/global-key-ring-en/cryptoKeys/global-kms-key-en"
 
 
@@ -22,7 +22,11 @@ yugabyte_clusters_project1 = {
     enable_wal1_disk_snapshot_attach   = false
     enable_shared_disk_snapshot_attach = false
     attached_persistent_disk_sizes     = [10]
-    machine_zone                       = ["northamerica-northeast1-a","northamerica-northeast1-b","northamerica-northeast1-c"]
+    machine_zone = [
+  "us-south1-a",
+  "us-south1-b",
+  "us-south1-c"
+]
     policy_name                        = "yba-snapshot-policy"
     utc_time                           = "00:00"
     retention_days                     = 7
@@ -40,10 +44,15 @@ yugabyte_clusters_project1 = {
   "10.0.0.11",
   "10.0.0.12"
 ]
-    region                             = "northamerica-northeast1"
+    region                             = "us-south1"
     machine_type                       = "n2-standard-2"
     vm_deletion_protection             = false
-    network_tags                       = ["yugabyte","allow-ssh"]
+     network_tags = [
+      "yugabyte",
+      "monitoring",
+      "internal",
+      "allow-ssh"
+    ]
     network                            = "vpc-yugabyte-terraform-cluster"
     subnetwork                         = "yugabyte-sub-1"
     service_account = {
@@ -80,7 +89,11 @@ yugabyte_clusters_project1_monitor = {
     enable_wal1_disk_snapshot_attach   = false
     enable_shared_disk_snapshot_attach = false
     attached_persistent_disk_sizes     = []
-    machine_zone                       = ["northamerica-northeast1-a","northamerica-northeast1-b","northamerica-northeast1-c"]
+    machine_zone = [
+  "us-south1-a",
+  "us-south1-b",
+  "us-south1-c"
+]
     policy_name                        = "monitor-snapshot-policy-monitor"
     utc_time                           = "00:00"
     retention_days                     = 7
@@ -96,10 +109,15 @@ yugabyte_clusters_project1_monitor = {
     internal_ip = [
   "10.0.0.15",
 ]
-    region                             = "northamerica-northeast1"
+    region                             = "us-south1"
     machine_type                       = "n2-standard-2"
     vm_deletion_protection             = false
-    network_tags                       = ["yugabyte","allow-ssh"]
+     network_tags = [
+      "yugabyte",
+      "monitoring",
+      "internal",
+      "allow-ssh"
+    ]
     network                            = "vpc-yugabyte-terraform-cluster"
     subnetwork                         = "yugabyte-sub-1"
     service_account = {
@@ -135,7 +153,11 @@ yugabyte_clusters_project1_config = {
     enable_wal1_disk_snapshot_attach   = false
     enable_shared_disk_snapshot_attach = false
     attached_persistent_disk_sizes     = []
-    machine_zone                       = ["northamerica-northeast1-a","northamerica-northeast1-b","northamerica-northeast1-c"]
+    machine_zone = [
+  "us-south1-a",
+  "us-south1-b",
+  "us-south1-c"
+]
     policy_name                        = "ansible-snapshot-policy-monitor"
     utc_time                           = "00:00"
     retention_days                     = 7
@@ -151,10 +173,15 @@ yugabyte_clusters_project1_config = {
     internal_ip = [
   "10.0.0.16",
 ]
-    region                             = "northamerica-northeast1"
+    region                             = "us-south1"
     machine_type                       = "e2-small"
     vm_deletion_protection             = false
-    network_tags                       = ["yugabyte","allow-ssh"]
+     network_tags = [
+      "yugabyte",
+      "monitoring",
+      "internal",
+      "allow-ssh"
+    ]
     network                            = "vpc-yugabyte-terraform-cluster"
     subnetwork                         = "yugabyte-sub-1"
     service_account = {
