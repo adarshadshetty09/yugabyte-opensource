@@ -4,10 +4,10 @@ After=network.target
 
 [Service]
 User=ansible
-Environment=DATA_SOURCE_NAME=postgresql://{{ postgres_user }}@{{ postgres_host }}:{{ postgres_port }}/{{ postgres_db }}?sslmode=require
+Environment=DATA_SOURCE_NAME=postgresql://{{ postgres_user }}:{{ postgres_password }}@{{ postgres_host }}:{{ postgres_port }}/{{ postgres_db }}?sslmode=require
 Environment=PG_EXPORTER_DISABLE_SETTINGS_METRICS=true
 ExecStart=/usr/local/bin/postgres_exporter --collector.stat_statements
 Restart=always
 
 [Install]
-WantedBy=multi-user.targets
+WantedBy=multi-user.target

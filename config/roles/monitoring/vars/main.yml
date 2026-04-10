@@ -3,3 +3,9 @@
 db_user: yugabyte
 db_password: "Admin123"   # or put password
 db_name: yugabyte
+
+postgres_user: yugabyte
+postgres_password: ZYSGOyJj6rcf
+postgres_host: 10.0.0.10
+postgres_port: 5433
+postgres_db: yugabytes
