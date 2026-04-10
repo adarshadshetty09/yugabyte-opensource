@@ -1,219 +1,204 @@
 {
-"annotations": { "list": [] },
-"editable": true,
-"schemaVersion": 38,
-"version": 2,
-"title": "🐘 PostgreSQL Production Monitoring",
+  "annotations": { "list": [] },
+  "editable": true,
+  "schemaVersion": 38,
+  "version": 3,
+  "title": "🚀 Yugabyte PostgreSQL Production Dashboard",
 
-"panels": [
+  "panels": [
 
-{
-  "type": "stat",
-  "title": "🚨 DB Status",
-  "targets": [{ "expr": "pg_up", "refId": "A" }],
-  "fieldConfig": {
-    "defaults": {
-      "thresholds": {
-        "steps": [
-          { "color": "red", "value": 0 },
-          { "color": "green", "value": 1 }
-        ]
-      }
-    },
-    "overrides": [
-      {
-        "matcher": { "id": "byName", "options": "Value" },
-        "properties": [
-          {
-            "id": "mappings",
-            "value": [
-              {
-                "type": "value",
-                "options": {
-                  "1": { "text": "🟢 UP" },
-                  "0": { "text": "🔴 DOWN" }
-                }
-              }
+    {
+      "type": "stat",
+      "title": "🚨 DB Status",
+      "targets": [{ "expr": "pg_up", "refId": "A" }],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "green", "value": 1 }
             ]
           }
-        ]
-      }
-    ]
-  },
-  "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 }
-},
-
-{
-  "type": "stat",
-  "title": "⚠️ Scrape Error",
-  "targets": [{ "expr": "pg_exporter_last_scrape_error", "refId": "A" }],
-  "fieldConfig": {
-    "defaults": {
-      "thresholds": {
-        "steps": [
-          { "color": "green", "value": 0 },
-          { "color": "red", "value": 1 }
-        ]
-      }
-    }
-  },
-  "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 }
-},
-
-{
-  "type": "stat",
-  "title": "⏱ Scrape Duration",
-  "targets": [{ "expr": "pg_exporter_last_scrape_duration_seconds", "refId": "A" }],
-  "fieldConfig": {
-    "defaults": {
-      "unit": "s",
-      "thresholds": {
-        "steps": [
-          { "color": "green", "value": 0 },
-          { "color": "orange", "value": 1 },
-          { "color": "red", "value": 2 }
-        ]
-      }
-    }
-  },
-  "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 }
-},
-
-{
-  "type": "stat",
-  "title": "🔗 Total Connections",
-  "targets": [{ "expr": "sum(pg_stat_activity_count)", "refId": "A" }],
-  "fieldConfig": {
-    "defaults": {
-      "thresholds": {
-        "steps": [
-          { "color": "green", "value": 0 },
-          { "color": "orange", "value": 50 },
-          { "color": "red", "value": 100 }
-        ]
-      }
-    }
-  },
-  "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 }
-},
-
-
-
-{
-  "type": "timeseries",
-  "title": "📊 Connections (Active vs Idle)",
-  "targets": [
-    { "expr": "sum(pg_stat_activity_count{state=\"active\"})", "legendFormat": "Active" },
-    { "expr": "sum(pg_stat_activity_count{state=\"idle\"})", "legendFormat": "Idle" }
-  ],
-  "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 }
-},
-
-{
-  "type": "timeseries",
-  "title": "⚡ TPS",
-  "targets": [
-    {
-      "expr": "sum(rate(pg_stat_database_xact_commit[1m]))",
-      "legendFormat": "TPS"
-    }
-  ],
-  "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 }
-},
-
-
-
-{
-  "type": "timeseries",
-  "title": "⏱ Query Latency",
-  "targets": [
-    {
-      "expr": "rate(pg_stat_database_blk_read_time[1m])",
-      "legendFormat": "Read"
+        }
+      },
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 }
     },
+
     {
-      "expr": "rate(pg_stat_database_blk_write_time[1m])",
-      "legendFormat": "Write"
-    }
-  ],
-  "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 }
-},
+      "type": "stat",
+      "title": "⚠️ Scrape Error",
+      "targets": [{ "expr": "pg_exporter_last_scrape_error", "refId": "A" }],
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 }
+    },
 
-{
-  "type": "timeseries",
-  "title": "🔒 Locks",
-  "targets": [
-    { "expr": "sum(pg_locks_count)", "legendFormat": "Locks" }
-  ],
-  "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 }
-},
-
-
-
-{
-  "type": "bargauge",
-  "title": "💾 DB Size",
-  "targets": [
-    { "expr": "pg_database_size_bytes", "legendFormat": "{{datname}}" }
-  ],
-  "fieldConfig": {
-    "defaults": { "unit": "bytes" }
-  },
-  "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 }
-},
-
-
-
-{
-  "type": "table",
-  "title": "🗄️ Database Overview",
-  "targets": [
-    { "expr": "pg_database_size_bytes", "refId": "A" },
-    { "expr": "sum by(datname) (pg_stat_activity_count)", "refId": "B" },
-    { "expr": "sum by(datname) (pg_stat_activity_count{state=\"active\"})", "refId": "C" },
-    { "expr": "sum by(datname) (pg_locks_count)", "refId": "D" }
-  ],
-  "transformations": [
-    { "id": "reduce", "options": { "reducers": ["lastNotNull"] } },
-    { "id": "joinByField", "options": { "byField": "datname" } },
     {
-      "id": "organize",
-      "options": {
-        "renameByName": {
-          "datname": "Database",
-          "Value #A": "Size",
-          "Value #B": "Connections",
-          "Value #C": "Active",
-          "Value #D": "Locks"
+      "type": "stat",
+      "title": "🔗 Connections",
+      "targets": [{ "expr": "sum(pg_stat_activity_count)", "refId": "A" }],
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 }
+    },
+
+    {
+      "type": "stat",
+      "title": "🔥 Active Queries",
+      "targets": [{ "expr": "sum(pg_stat_activity_count{state=\"active\"})", "refId": "A" }],
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 }
+    },
+
+    {
+      "type": "stat",
+      "title": "❌ Error Rate",
+      "targets": [{ "expr": "rate(pg_stat_database_xact_rollback[1m])", "refId": "A" }],
+      "gridPos": { "x": 16, "y": 0, "w": 4, "h": 4 }
+    },
+
+    {
+      "type": "stat",
+      "title": "💾 Cache Hit Ratio",
+      "targets": [
+        {
+          "expr": "sum(pg_stat_database_blks_hit) / (sum(pg_stat_database_blks_hit) + sum(pg_stat_database_blks_read))",
+          "refId": "A"
         }
-      }
-    }
-  ],
-  "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 }
-},
-
-
-
-{
-  "type": "table",
-  "title": "🔁 Replication",
-  "targets": [
-    { "expr": "pg_replication_lag_seconds", "refId": "A" },
-    { "expr": "pg_replication_is_replica", "refId": "B" }
-  ],
-  "transformations": [
-    { "id": "reduce", "options": { "reducers": ["lastNotNull"] } },
-    {
-      "id": "organize",
-      "options": {
-        "renameByName": {
-          "Value #A": "Lag (sec)",
-          "Value #B": "Replica"
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": 0.8 },
+              { "color": "orange", "value": 0.9 },
+              { "color": "green", "value": 0.95 }
+            ]
+          }
         }
-      }
+      },
+      "gridPos": { "x": 20, "y": 0, "w": 4, "h": 4 }
+    },
+
+
+
+    {
+      "type": "timeseries",
+      "title": "📊 Connections (Active vs Idle)",
+      "targets": [
+        { "expr": "sum(pg_stat_activity_count{state=\"active\"})", "legendFormat": "Active" },
+        { "expr": "sum(pg_stat_activity_count{state=\"idle\"})", "legendFormat": "Idle" }
+      ],
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "⚡ TPS",
+      "targets": [
+        {
+          "expr": "sum(rate(pg_stat_database_xact_commit[1m]))",
+          "legendFormat": "TPS"
+        }
+      ],
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 }
+    },
+
+
+
+    {
+      "type": "timeseries",
+      "title": "💿 Disk Read vs Cache Hit",
+      "targets": [
+        { "expr": "rate(pg_stat_database_blks_read[1m])", "legendFormat": "Disk Read" },
+        { "expr": "rate(pg_stat_database_blks_hit[1m])", "legendFormat": "Cache Hit" }
+      ],
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "⏱ Query Latency",
+      "targets": [
+        { "expr": "rate(pg_stat_database_blk_read_time[1m])", "legendFormat": "Read" },
+        { "expr": "rate(pg_stat_database_blk_write_time[1m])", "legendFormat": "Write" }
+      ],
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 }
+    },
+
+
+
+    {
+      "type": "timeseries",
+      "title": "🧨 Temp File Usage",
+      "targets": [
+        {
+          "expr": "rate(pg_stat_database_temp_bytes[1m])",
+          "legendFormat": "Temp Bytes"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "🔒 Locks",
+      "targets": [
+        { "expr": "sum(pg_locks_count)", "legendFormat": "Locks" }
+      ],
+      "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 }
+    },
+
+
+
+    {
+      "type": "timeseries",
+      "title": "🐢 Slow Queries (Total Time)",
+      "targets": [
+        {
+          "expr": "topk(5, rate(pg_stat_statements_total_time[1m]))",
+          "legendFormat": "{{query}}"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 28, "w": 12, "h": 8 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "🔥 Most Executed Queries",
+      "targets": [
+        {
+          "expr": "topk(5, rate(pg_stat_statements_calls[1m]))",
+          "legendFormat": "{{query}}"
+        }
+      ],
+      "gridPos": { "x": 12, "y": 28, "w": 12, "h": 8 }
+    },
+
+
+
+    {
+      "type": "bargauge",
+      "title": "💾 Database Size",
+      "targets": [
+        { "expr": "pg_database_size_bytes", "legendFormat": "{{datname}}" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "bytes" }
+      },
+      "gridPos": { "x": 0, "y": 36, "w": 12, "h": 8 }
+    },
+
+    {
+      "type": "table",
+      "title": "🗄️ Database Overview",
+      "targets": [
+        { "expr": "pg_database_size_bytes", "refId": "A" },
+        { "expr": "sum by(datname) (pg_stat_activity_count)", "refId": "B" },
+        { "expr": "sum by(datname) (pg_locks_count)", "refId": "C" }
+      ],
+      "transformations": [
+        { "id": "reduce", "options": { "reducers": ["lastNotNull"] } },
+        { "id": "joinByField", "options": { "byField": "datname" } }
+      ],
+      "gridPos": { "x": 12, "y": 36, "w": 12, "h": 8 }
     }
-  ],
-  "gridPos": { "x": 0, "y": 28, "w": 24, "h": 8 }
-}
-]
+
+  ]
 }
