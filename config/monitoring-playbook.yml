@@ -1,47 +1,94 @@
-# ------------------------------
-# STEP 1: START PRIMARY NODE
-# ------------------------------
+# # ------------------------------
+# # STEP 1: START PRIMARY NODE
+# # ------------------------------
+# - name: Start primary node
+#   hosts: nodes[0]
+#   become: yes
+#   roles:
+#     - ybdb
+
+# # ------------------------------
+# # STEP 2: WAIT FOR MASTER READY
+# # ------------------------------
+# - name: Wait for master to be ready
+#   hosts: nodes[1:]
+#   gather_facts: no
+#   tasks:
+#     - name: Wait for master UI
+#       wait_for:
+#         host: "{{ hostvars[groups['nodes'][0]].ansible_host }}"
+#         port: 7000
+#         delay: 5
+#         timeout: 120
+
+# # ------------------------------
+# # STEP 3: START FOLLOWER NODES  
+# # ------------------------------
+# - name: Start follower nodes
+#   hosts: nodes[1:]
+#   serial: 1        
+#   become: yes
+#   roles:
+#     - ybdb
+
+# # ------------------------------
+# # STEP 4: MONITORING NODE
+# # ------------------------------
+# - name: Setup monitoring
+#   hosts: monitoring
+#   become: yes
+#   roles:
+#     - monitoring   
+  
+# - name: Setup monitoring
+#   hosts: nodes
+#   become: yes
+#   roles:
+#     - monitoring   
+
+
+
+# STEP 1
 - name: Start primary node
   hosts: nodes[0]
   become: yes
   roles:
-    - ybdb
+    - role: ybdb
+      tags: primary
 
-# ------------------------------
-# STEP 2: WAIT FOR MASTER READY
-# ------------------------------
+# STEP 2
 - name: Wait for master to be ready
   hosts: nodes[1:]
   gather_facts: no
   tasks:
     - name: Wait for master UI
+      tags: wait
       wait_for:
         host: "{{ hostvars[groups['nodes'][0]].ansible_host }}"
         port: 7000
         delay: 5
         timeout: 120
 
-# ------------------------------
-# STEP 3: START FOLLOWER NODES  
-# ------------------------------
+# STEP 3
 - name: Start follower nodes
   hosts: nodes[1:]
-  serial: 1        
+  serial: 1
   become: yes
   roles:
-    - ybdb
+    - role: ybdb
+      tags: follower
 
-# ------------------------------
-# STEP 4: MONITORING NODE
-# ------------------------------
+# STEP 4
 - name: Setup monitoring
   hosts: monitoring
   become: yes
   roles:
-    - monitoring   
-  
-- name: Setup monitoring
+    - role: monitoring
+      tags: monitoring
+
+- name: Setup monitoring nodes
   hosts: nodes
   become: yes
   roles:
-    - monitoring   
+    - role: monitoring
+      tags: monitoring

@@ -2,18 +2,24 @@
 "annotations": { "list": [] },
 "editable": true,
 "schemaVersion": 38,
-"version": 1,
-"title": "🐘 PostgreSQL Clean Monitoring Dashboard",
+"version": 2,
+"title": "🐘 PostgreSQL Production Monitoring",
 
 "panels": [
 
 {
   "type": "stat",
-  "title": "🚨 PostgreSQL Status",
-  "targets": [
-    { "expr": "pg_up", "refId": "A" }
-  ],
+  "title": "🚨 DB Status",
+  "targets": [{ "expr": "pg_up", "refId": "A" }],
   "fieldConfig": {
+    "defaults": {
+      "thresholds": {
+        "steps": [
+          { "color": "red", "value": 0 },
+          { "color": "green", "value": 1 }
+        ]
+      }
+    },
     "overrides": [
       {
         "matcher": { "id": "byName", "options": "Value" },
@@ -24,8 +30,8 @@
               {
                 "type": "value",
                 "options": {
-                  "1": { "text": "🟢 UP", "color": "green" },
-                  "0": { "text": "🔴 DOWN", "color": "red" }
+                  "1": { "text": "🟢 UP" },
+                  "0": { "text": "🔴 DOWN" }
                 }
               }
             ]
@@ -39,66 +45,95 @@
 
 {
   "type": "stat",
-  "title": "⚠️ Scrape Errors",
-  "targets": [
-    { "expr": "pg_exporter_last_scrape_error", "refId": "A" }
-  ],
+  "title": "⚠️ Scrape Error",
+  "targets": [{ "expr": "pg_exporter_last_scrape_error", "refId": "A" }],
+  "fieldConfig": {
+    "defaults": {
+      "thresholds": {
+        "steps": [
+          { "color": "green", "value": 0 },
+          { "color": "red", "value": 1 }
+        ]
+      }
+    }
+  },
   "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 }
 },
 
 {
   "type": "stat",
-  "title": "⏱ Scrape Duration (s)",
-  "targets": [
-    { "expr": "pg_exporter_last_scrape_duration_seconds", "refId": "A" }
-  ],
+  "title": "⏱ Scrape Duration",
+  "targets": [{ "expr": "pg_exporter_last_scrape_duration_seconds", "refId": "A" }],
+  "fieldConfig": {
+    "defaults": {
+      "unit": "s",
+      "thresholds": {
+        "steps": [
+          { "color": "green", "value": 0 },
+          { "color": "orange", "value": 1 },
+          { "color": "red", "value": 2 }
+        ]
+      }
+    }
+  },
   "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 }
 },
 
 {
   "type": "stat",
   "title": "🔗 Total Connections",
-  "targets": [
-    { "expr": "sum(pg_stat_activity_count)", "refId": "A" }
-  ],
+  "targets": [{ "expr": "sum(pg_stat_activity_count)", "refId": "A" }],
+  "fieldConfig": {
+    "defaults": {
+      "thresholds": {
+        "steps": [
+          { "color": "green", "value": 0 },
+          { "color": "orange", "value": 50 },
+          { "color": "red", "value": 100 }
+        ]
+      }
+    }
+  },
   "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 }
 },
+
+
 
 {
   "type": "timeseries",
   "title": "📊 Connections (Active vs Idle)",
   "targets": [
-    {
-      "expr": "sum(pg_stat_activity_count{state=\"active\"})",
-      "legendFormat": "Active"
-    },
-    {
-      "expr": "sum(pg_stat_activity_count{state=\"idle\"})",
-      "legendFormat": "Idle"
-    }
+    { "expr": "sum(pg_stat_activity_count{state=\"active\"})", "legendFormat": "Active" },
+    { "expr": "sum(pg_stat_activity_count{state=\"idle\"})", "legendFormat": "Idle" }
   ],
   "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 }
 },
 
 {
   "type": "timeseries",
-  "title": "⚡ Transactions Per Second (TPS)",
+  "title": "⚡ TPS",
   "targets": [
     {
-      "expr": "rate(pg_stat_database_xact_commit[1m])",
-      "legendFormat": "{{datname}}"
+      "expr": "sum(rate(pg_stat_database_xact_commit[1m]))",
+      "legendFormat": "TPS"
     }
   ],
   "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 }
 },
 
+
+
 {
   "type": "timeseries",
-  "title": "⏱ Query Latency (Approx)",
+  "title": "⏱ Query Latency",
   "targets": [
     {
       "expr": "rate(pg_stat_database_blk_read_time[1m])",
-      "legendFormat": "Read Latency"
+      "legendFormat": "Read"
+    },
+    {
+      "expr": "rate(pg_stat_database_blk_write_time[1m])",
+      "legendFormat": "Write"
     }
   ],
   "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 }
@@ -108,40 +143,35 @@
   "type": "timeseries",
   "title": "🔒 Locks",
   "targets": [
-    {
-      "expr": "sum(pg_locks_count)",
-      "legendFormat": "Locks"
-    }
+    { "expr": "sum(pg_locks_count)", "legendFormat": "Locks" }
   ],
   "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 }
 },
 
+
+
 {
   "type": "bargauge",
-  "title": "💾 Database Size",
+  "title": "💾 DB Size",
   "targets": [
-    {
-      "expr": "pg_database_size_bytes",
-      "legendFormat": "{{datname}}"
-    }
+    { "expr": "pg_database_size_bytes", "legendFormat": "{{datname}}" }
   ],
   "fieldConfig": {
-    "defaults": {
-      "unit": "bytes"
-    }
+    "defaults": { "unit": "bytes" }
   },
   "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 }
 },
 
+
+
 {
   "type": "table",
-  "title": "🗄️ Database Activity",
+  "title": "🗄️ Database Overview",
   "targets": [
     { "expr": "pg_database_size_bytes", "refId": "A" },
     { "expr": "sum by(datname) (pg_stat_activity_count)", "refId": "B" },
     { "expr": "sum by(datname) (pg_stat_activity_count{state=\"active\"})", "refId": "C" },
-    { "expr": "sum by(datname) (pg_stat_activity_count{state=\"idle\"})", "refId": "D" },
-    { "expr": "sum by(datname) (pg_locks_count)", "refId": "E" }
+    { "expr": "sum by(datname) (pg_locks_count)", "refId": "D" }
   ],
   "transformations": [
     { "id": "reduce", "options": { "reducers": ["lastNotNull"] } },
@@ -154,8 +184,7 @@
           "Value #A": "Size",
           "Value #B": "Connections",
           "Value #C": "Active",
-          "Value #D": "Idle",
-          "Value #E": "Locks"
+          "Value #D": "Locks"
         }
       }
     }
@@ -163,9 +192,11 @@
   "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 }
 },
 
+
+
 {
   "type": "table",
-  "title": "🔁 Replication Status",
+  "title": "🔁 Replication",
   "targets": [
     { "expr": "pg_replication_lag_seconds", "refId": "A" },
     { "expr": "pg_replication_is_replica", "refId": "B" }
