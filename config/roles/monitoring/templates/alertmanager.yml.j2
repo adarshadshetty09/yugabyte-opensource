@@ -1,0 +1,13 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: "{{ alert_receiver }}"
+  group_wait: {{ group_wait }}
+  group_interval: {{ group_interval }}
+  repeat_interval: {{ repeat_interval }}
+
+receivers:
+  - name: "{{ alert_receiver }}"
+    webhook_configs:
+      - url: "{{ webhook_url }}"

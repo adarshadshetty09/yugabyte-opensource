@@ -1,0 +1,123 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+{% for host in groups['monitoring'] %}
+          - "{{ hostvars[host].ansible_host }}:9093"
+{% endfor %}
+
+rule_files:
+  - "alert.rules.yml"
+
+scrape_configs:
+
+  # =============================
+  # Prometheus Self Monitoring
+  # =============================
+  - job_name: "prometheus"
+    static_configs:
+      - targets:
+{% for host in groups['monitoring'] %}
+          - "{{ hostvars[host].ansible_host }}:9090"
+{% endfor %}
+
+  # =============================
+  # Node Exporter (System Metrics)
+  # =============================
+  - job_name: "node-exporter"
+    static_configs:
+      - targets:
+{% for host in groups['nodes'] %}
+          - "{{ hostvars[host].ansible_host }}:9200"
+{% endfor %}
+
+  # =============================
+  # POSTGRES-EXPORTER (System Metrics)
+  # =============================
+  - job_name: "POSTGRES-EXPORTER"
+    static_configs:
+      - targets:
+{% for host in groups['nodes'] %}
+          - "{{ hostvars[host].ansible_host }}:9187"
+{% endfor %}
+
+  # =============================
+  # YugabyteDB Masters
+  # =============================
+  - job_name: "yugabyte-masters"
+    metrics_path: /prometheus-metrics
+    static_configs:
+      - targets:
+{% for host in groups['nodes'] %}
+          - "{{ hostvars[host].ansible_host }}:7000"
+{% endfor %}
+
+  # =============================
+  # YugabyteDB TServers
+  # =============================
+  - job_name: "yugabyte-tservers"
+    metrics_path: /prometheus-metrics
+    static_configs:
+      - targets:
+{% for host in groups['nodes'] %}
+          - "{{ hostvars[host].ansible_host }}:9000"
+{% endfor %}
+
+  # =============================
+  # Blackbox Exporter (Health Checks)
+  # =============================
+  - job_name: "blackbox"
+    metrics_path: /probe
+    params:
+      module:
+        - http_2xx
+    static_configs:
+      - targets:
+{% for host in groups['nodes'] %}
+          - "http://{{ hostvars[host].ansible_host }}:7000"
+{% endfor %}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: "{{ hostvars[groups['monitoring'][0]].ansible_host }}:9115"
+
+  # =============================
+  # Alertmanager
+  # =============================
+  - job_name: "alertmanager"
+    static_configs:
+      - targets:
+{% for host in groups['monitoring'] %}
+          - "{{ hostvars[host].ansible_host }}:9093"
+{% endfor %}
+
+
+  # =============================
+  # Yugabyte YSQL (Web UI Metrics)
+  # =============================
+  - job_name: "yugabyte-ysql"
+    metrics_path: /prometheus-metrics
+    static_configs:
+      - targets:
+{% for host in groups['nodes'] %}
+          - "{{ hostvars[host].ansible_host }}:13000"
+{% endfor %}
+
+
+  # =============================
+  # Yugabyte YCQL (Web UI Metrics)
+  # =============================
+  - job_name: "yugabyte-ycql"
+    metrics_path: /prometheus-metrics
+    static_configs:
+      - targets:
+{% for host in groups['nodes'] %}
+          - "{{ hostvars[host].ansible_host }}:12000"
+{% endfor %}

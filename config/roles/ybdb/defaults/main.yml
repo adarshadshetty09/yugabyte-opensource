@@ -1,0 +1,36 @@
+---
+# defaults file for ybdb
+# -------------------------------
+#  ADD THIS (Disk config)
+# -------------------------------
+# disks:
+#   # - device: "/dev/sdb"
+#   #   part: "/dev/sdb1"
+#   #   mount: "/mnt/yba-wal"
+
+#   # - device: "/dev/sdc"
+#   #   part: "/dev/sdc1"
+#   #   mount: "/mnt/yba-shared"
+
+#   # - device: "/dev/sdb"
+#   #   part: "/dev/sdb1"
+#   #   mount: "/mnt/yba-data"
+
+
+# Yugabyte cluster config
+base_dir: /mnt/yba-data
+yugabyte_home: "/home/yugabyte/yugabyte-2024.2.8.0"
+bin_path: "{{ yugabyte_home }}/bin/yugabyted"
+
+is_primary: "{{ inventory_hostname == groups['nodes'][0] }}"
+master_ip: "{{ hostvars[groups['nodes'][0]].ansible_host }}"
+
+#  CONTROL FLAG
+destroy_cluster: false
+
+
+cloud: cloud1
+
+cloud_location: "{{ cloud }}.{{ hostvars[inventory_hostname].region }}.{{ hostvars[inventory_hostname].zone }}"
+
+certs_dir: /home/yugabyte/certs

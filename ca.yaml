@@ -1,0 +1,167 @@
+---
+- name: Setup TLS directory structure (Yugabyte style)
+  hosts: localhost
+  become: yes 
+  gather_facts: no
+
+  vars:
+    base_dir: "/home/ansible"
+    nodes: "{{ groups['yugabyte_nodes'] }}"
+    cert_dir: "/home/yugabyte/certs"
+
+  tasks:
+
+    - name: Install OpenSSL
+      package:
+        name: openssl
+        state: present
+      become: yes
+
+    - name: Create secure-data directory
+      file:
+        path: "{{ base_dir }}/secure-data"
+        state: directory
+        mode: '0755'
+
+    - name: Create node directories (one per node)
+      file:
+        path: "{{ base_dir }}/{{ hostvars[item].ansible_host }}"
+        state: directory
+        mode: '0755'
+      loop: "{{ nodes }}"
+
+    - name: Create CA config
+      copy:
+        dest: "{{ base_dir }}/secure-data/ca.conf"
+        content: |
+          [ ca ]
+          default_ca = my_ca
+
+          [ my_ca ]
+          default_days = 3650
+          serial = {{ base_dir }}/secure-data/serial.txt
+          database = {{ base_dir }}/secure-data/index.txt
+          new_certs_dir = {{ base_dir }}/secure-data/certs
+          default_md = sha256
+          policy = my_policy
+
+          [ my_policy ]
+          organizationName = supplied
+          commonName = supplied
+
+          [ req ]
+          prompt = no
+          distinguished_name = my_distinguished_name
+          x509_extensions = my_extensions
+
+          [ my_distinguished_name ]
+          organizationName = Yugabyte
+          commonName = CA for YugabyteDB
+
+          [ my_extensions ]
+          keyUsage = critical,digitalSignature,nonRepudiation,keyEncipherment,keyCertSign
+          basicConstraints = critical,CA:true,pathlen:1
+
+    - name: Create index.txt
+      file:
+        path: "{{ base_dir }}/secure-data/index.txt"
+        state: touch
+
+    - name: Create serial.txt
+      copy:
+        dest: "{{ base_dir }}/secure-data/serial.txt"
+        content: "01"
+
+    - name: Create CA cert storage dir
+      file:
+        path: "{{ base_dir }}/secure-data/certs"
+        state: directory
+
+    - name: Generate CA private key
+      command: openssl genrsa -out {{ base_dir }}/secure-data/ca.key 2048
+      args:
+        creates: "{{ base_dir }}/secure-data/ca.key"
+
+    - name: Set permissions on CA key
+      file:
+        path: "{{ base_dir }}/secure-data/ca.key"
+        mode: '0400'
+
+    - name: Generate CA certificate
+      command: >
+        openssl req -new -x509
+        -days 3650
+        -config {{ base_dir }}/secure-data/ca.conf
+        -key {{ base_dir }}/secure-data/ca.key
+        -out {{ base_dir }}/secure-data/ca.crt
+      args:
+        creates: "{{ base_dir }}/secure-data/ca.crt"
+
+    - name: Verify the Generated CA Certs
+      command: >
+        openssl x509 -in {{ base_dir }}/secure-data/ca.crt -text -noout
+
+    - name: Copy CA cert to node directories
+      copy:
+        src: "{{ base_dir }}/secure-data/ca.crt"
+        dest: "{{ base_dir }}/{{ hostvars[item].ansible_host }}/ca.crt"
+      loop: "{{ nodes }}"
+
+    - name: Generate node config
+      template:
+        src: templates/node.conf.j2
+        dest: "{{ base_dir }}/{{ hostvars[item].ansible_host }}/node.conf"
+      loop: "{{ nodes }}"
+      vars:
+        node_ip: "{{ hostvars[item].ansible_host }}"
+
+    - name: Generate node key
+      command: >
+        openssl genrsa -out
+        {{ base_dir }}/{{ hostvars[item].ansible_host }}/node.{{ hostvars[item].ansible_host }}.key 2048
+      args:
+        creates: "{{ base_dir }}/{{ hostvars[item].ansible_host }}/node.{{ hostvars[item].ansible_host }}.key"
+      loop: "{{ nodes }}"
+
+    - name: Generate CSR
+      command: >
+        openssl req -new
+        -config {{ base_dir }}/{{ hostvars[item].ansible_host }}/node.conf
+        -key {{ base_dir }}/{{ hostvars[item].ansible_host }}/node.{{ hostvars[item].ansible_host }}.key
+        -out {{ base_dir }}/{{ hostvars[item].ansible_host }}/node.csr
+      args:
+        creates: "{{ base_dir }}/{{ hostvars[item].ansible_host }}/node.csr"
+      loop: "{{ nodes }}"
+
+    - name: Sign node certificate
+      command: >
+        openssl ca
+        -config {{ base_dir }}/secure-data/ca.conf
+        -keyfile {{ base_dir }}/secure-data/ca.key
+        -cert {{ base_dir }}/secure-data/ca.crt
+        -policy my_policy
+        -out {{ base_dir }}/{{ hostvars[item].ansible_host }}/node.{{ hostvars[item].ansible_host }}.crt
+        -in {{ base_dir }}/{{ hostvars[item].ansible_host }}/node.csr
+        -days 3650
+        -batch
+        -extfile {{ base_dir }}/{{ hostvars[item].ansible_host }}/node.conf
+        -extensions req_ext
+      args:
+        creates: "{{ base_dir }}/{{ hostvars[item].ansible_host }}/node.{{ hostvars[item].ansible_host }}.crt"
+      loop: "{{ nodes }}"
+
+    - name: Verify node certificates
+      command: >
+        openssl verify
+        -CAfile {{ base_dir }}/secure-data/ca.crt
+        {{ base_dir }}/{{ hostvars[item].ansible_host }}/node.{{ hostvars[item].ansible_host }}.crt
+      register: verify_output
+      loop: "{{ nodes }}"
+
+    - name: Show verification result
+      debug:
+        msg: "{{ item.stdout }}"
+      loop: "{{ verify_output.results }}"
+
+
+

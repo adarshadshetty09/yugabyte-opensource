@@ -1,0 +1,53 @@
+ansible-playbook -i config/inventory.ini monitoring-playbook.yml -e "destroy_cluster=true"
+
+ansible-galaxy collection install ansible.posix community.general
+
+
+
+
+./bin/yugabyted configure data_placement --fault_tolerance=region --rf=5 --base_dir=/mnt/yba-data/
+
+
+[yugabyte@ybdb1 yugabyte-2024.2.8.0]$ ./bin/yugabyted configure data_placement --fault_tolerance=region --rf=5 --base_dir=/mnt/yba-data/
+
++-----------------------------------------------------------------------------------------------+
+|                                           yugabyted                                           |
++-----------------------------------------------------------------------------------------------+
+| Status                 : Configuration successful. Primary data placement is geo-redundant.   |
+| Fault Tolerance        : Primary Cluster can survive at most any 2 region failure.            |
++-----------------------------------------------------------------------------------------------+
+
+[yugabyte@ybdb1 yugabyte-2024.2.8.0]$ 
+
+
+
+
+gcloud compute ssh monitor1 \
+  --zone northamerica-northeast1-a \
+  --project project-7b6bf38a-3ad2-4d2b-bdb \
+  --tunnel-through-iap -- \
+  -L 9090:10.0.0.15:9090 \
+  -L 3000:10.0.0.15:3000 \
+  -L 9093:10.0.0.15:9093 \
+  -L 9115:10.0.0.15:9115 \
+  -L 15433:10.0.0.10:15433 \
+  -L 9000:10.0.0.10:9000 \
+  -L 7000:10.0.0.10:7000 \
+  -L 5433:10.0.0.10:5433 \
+  -L 9042:10.0.0.10:9042 \
+  -L 6379:10.0.0.10:6379 \
+  -L 7100:10.0.0.10:7100 \
+  -L 9100:10.0.0.10:9100 \
+  -L 9300:10.0.0.10:9300 \
+  -L 12000:10.0.0.10:12000 \
+  -L 13000:10.0.0.10:13000
+
+
+
+
+
+sudo yum install chrony -y
+sudo systemctl enable chronyd
+sudo systemctl start chronyd
+sudo systemctl status chronyd
+

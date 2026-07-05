@@ -1,0 +1,58 @@
+- name: Deploy TLS certs to DB nodes (keep original filenames)
+  hosts: db_nodes
+  become: yes
+
+  vars:
+    base_dir: "/home/ansible"
+    cert_dir: "/home/yugabyte/certs"
+
+  pre_tasks:
+
+    - name: Check if key exists
+      stat:
+        path: "{{ base_dir }}/{{ ansible_host }}/node.{{ ansible_host }}.key"
+      delegate_to: localhost
+      register: key_file
+
+    - name: Fix key permissions
+      file:
+        path: "{{ base_dir }}/{{ ansible_host }}/node.{{ ansible_host }}.key"
+        owner: ansible
+        group: ansible
+        mode: '0644'
+      delegate_to: localhost
+      when: key_file.stat.exists
+
+  tasks:
+
+    - name: Create cert directory
+      file:
+        path: "{{ cert_dir }}"
+        state: directory
+        owner: yugabyte
+        group: yugabyte
+        mode: '0755'
+
+    - name: Copy CA cert
+      copy:
+        src: "{{ base_dir }}/secure-data/ca.crt"
+        dest: "{{ cert_dir }}/ca.crt"
+        owner: yugabyte
+        group: yugabyte
+        mode: '0644'
+
+    - name: Copy node cert
+      copy:
+        src: "{{ base_dir }}/{{ ansible_host }}/node.{{ ansible_host }}.crt"
+        dest: "{{ cert_dir }}/node.{{ ansible_host }}.crt"
+        owner: yugabyte
+        group: yugabyte
+        mode: '0644'
+
+    - name: Copy node key
+      copy:
+        src: "{{ base_dir }}/{{ ansible_host }}/node.{{ ansible_host }}.key"
+        dest: "{{ cert_dir }}/node.{{ ansible_host }}.key"
+        owner: yugabyte
+        group: yugabyte
+        mode: '0400'

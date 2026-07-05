@@ -1,0 +1,12 @@
+# roles/ybdb/tasks/main.yml
+
+---
+# Disk setup
+- name: Setup disks for DB nodes
+  import_tasks: mounts.yaml
+  when: "'dbs' in group_names"
+
+# ADD THIS 
+- name: Run Yugabyte cluster setup
+  import_tasks: ybdbCluster.yaml
+  when: "'dbs' in group_names"

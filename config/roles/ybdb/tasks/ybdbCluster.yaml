@@ -1,0 +1,141 @@
+# ===============================
+# STEP 1: STOP + DESTROY (ALL NODES)
+# ===============================
+
+- name: Stop Yugabyte
+  command: "{{ bin_path }} stop --base_dir={{ base_dir }}"
+  become_user: yugabyte
+  ignore_errors: true
+  when: destroy_cluster
+
+- name: Destroy Yugabyte
+  command: "{{ bin_path }} destroy --base_dir={{ base_dir }}"
+  become_user: yugabyte
+  ignore_errors: true
+  
+
+# ===============================
+# STEP 2: SAFE CLEANUP
+# ===============================
+
+- name: Clean only runtime data (SAFE)
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /home/yugabyte/var/data
+    - /home/yugabyte/var/logs
+  ignore_errors: true
+
+- name: Wait after destroy
+  pause:
+    seconds: 10
+
+
+- name: Check certs directory exists
+  stat:
+    path: "{{ certs_dir }}"
+  register: certs_check
+
+- name: Fail if certs missing
+  fail:
+    msg: "TLS certs not found at {{ certs_dir }}"
+  when: not certs_check.stat.exists
+
+# ===============================
+# STEP 3: PRIMARY NODE
+# ===============================
+
+- name: Start primary node
+  command: >
+    {{ bin_path }} start
+    --advertise_address={{ ansible_host }}
+    --backup_daemon=true
+    --base_dir={{ base_dir }}
+    --cloud_location={{ cloud_location }}
+    --certs_dir={{ certs_dir }}
+    --secure
+  become_user: yugabyte
+  when: is_primary
+
+- name: Verify primary is running
+  command: "{{ bin_path }} status --base_dir={{ base_dir }}"
+  become_user: yugabyte
+  register: yb_status
+  retries: 15          
+  delay: 5
+  until: "'Running' in yb_status.stdout"
+  changed_when: false
+  when: is_primary
+
+- name: Wait for master UI (primary)
+  wait_for:
+    host: "{{ ansible_host }}"
+    port: 7000
+    delay: 5
+    timeout: 300
+  when: is_primary
+
+
+
+# ===============================
+# WAIT FOR LEADER STABILITY (IMPORTANT)
+# ===============================
+
+- name: Wait for cluster leader to stabilize
+  command: "{{ bin_path }} status --base_dir={{ base_dir }}"
+  become_user: yugabyte
+  register: cluster_ready
+  retries: 10
+  delay: 10
+  until: "'Running' in cluster_ready.stdout"
+  changed_when: false
+  when: is_primary
+
+
+- name: Extra wait before follower join
+  pause:
+    seconds: 20
+  when: not is_primary
+
+# ===============================
+# STEP 4: FOLLOWER NODES
+# ===============================
+
+- name: Join follower nodes
+  command: >
+    {{ bin_path }} start
+    --advertise_address={{ ansible_host }}
+    --backup_daemon=true
+    --join={{ master_ip }}
+    --base_dir={{ base_dir }}
+    --cloud_location={{ cloud_location }}
+    --certs_dir={{ certs_dir }}
+    --secure
+  become_user: yugabyte
+  when: not is_primary
+  throttle: 1        
+
+
+- name: Wait before checking follower status
+  pause:
+    seconds: 20
+  when: not is_primary
+
+- name: Verify follower is running
+  command: "{{ bin_path }} status --base_dir={{ base_dir }}"
+  become_user: yugabyte
+  register: yb_status_follower
+  retries: 20        
+  delay: 10           
+  until: "'Running' in yb_status_follower.stdout"
+  changed_when: false
+  when: not is_primary
+
+- name: Wait for tserver (followers)
+  wait_for:
+    host: "{{ ansible_host }}"
+    port: 9000
+    delay: 5
+    timeout: 300
+  when: not is_primary

@@ -1,0 +1,17 @@
+[Unit]
+Description=YugabyteDB Cluster (yugabyted-managed)
+After=network-online.target
+
+[Service]
+Type=simples
+RemainAfterExit=yes
+User=yugabyte
+Group=yugabyte
+WorkingDirectory=/home/yugabyte
+
+ExecStart=/usr/bin/python3 /home/yugabyte/yugabyte-2024.2.8.0/bin/yugabyted start --base_dir /mnt/yba-data 
+ExecStop=/usr/bin/python3 /home/yugabyte/yugabyte-2024.2.8.0/bin/yugabyted stop --base_dir /mnt/yba-data 
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target

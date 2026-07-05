@@ -1,0 +1,46 @@
+---
+# defaults file for ybdb
+
+# -------------------------------
+# Prometheus
+# -------------------------------
+prometheus_version: "2.51.2"
+prometheus_user: "prometheus"
+prometheus_group: "prometheus"
+
+install_dir: "/usr/local/bin"
+config_dir: "/etc/prometheus"
+data_dir: "/var/lib/prometheus"
+
+prometheus_port: 9090
+
+# -------------------------------
+# Node Exporter
+# -------------------------------
+node_exporter_version: "1.10.2"
+
+# -------------------------------
+# Alertmanager
+# -------------------------------
+alert_receiver: "test"
+group_wait: 10s
+group_interval: 1m
+repeat_interval: 5m
+webhook_url: "http://127.0.0.1:5001/"
+alertmanager_port: 9093
+
+# -------------------------------
+# Blackbox
+# -------------------------------
+blackbox_port: 9115
+
+
+#  postgres_exporter
+exporter_version: "0.15.0"
+exporter_dir: "/opt/postgres_exporter-{{ exporter_version }}.linux-amd64"
+
+postgres_host: "{{ ansible_host }}"
+postgres_port: "5433"
+postgres_db: "yugabyte"
+postgres_user: "yugabyte"
+

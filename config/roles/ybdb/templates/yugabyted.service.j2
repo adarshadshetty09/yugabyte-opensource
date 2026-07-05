@@ -1,0 +1,18 @@
+[Unit]
+Description=YugabyteDB Node
+After=network.target
+
+[Service]
+User=yugabyte
+WorkingDirectory=/home/yugabyte
+
+ExecStart={{ bin_path }} start --base_dir {{ base_dir }}
+ExecStop={{ bin_path }} stop --base_dir {{ base_dir }}
+
+Restart=on-failure
+RestartSec=5
+
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target
